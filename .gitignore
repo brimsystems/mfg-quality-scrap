@@ -205,3 +205,32 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Additional Settings
+
+# Data files — always regenerate from scripts
+modules/*/data/raw/
+modules/*/data/processed/
+
+# dbt
+modules/*/transform/dbt/profiles.yml
+modules/*/transform/dbt/target/
+modules/*/transform/dbt/dbt_packages/
+modules/*/transform/dbt/.user.yml
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# MLflow
+modules/*/ml/mlruns/
+modules/*/ml/models/*.pkl
+modules/*/ml/models/*.joblib
+
+# Evidence.dev
+modules/*/dashboard/evidence/.evidence/
+modules/*/dashboard/evidence/node_modules/
+
+# Environment
+.env
+.venv/
