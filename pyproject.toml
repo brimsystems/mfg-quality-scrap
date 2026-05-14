@@ -32,4 +32,4 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["modules*", "shared*"]
+include = ["defects_scrap*", "cases*", "shared*"]

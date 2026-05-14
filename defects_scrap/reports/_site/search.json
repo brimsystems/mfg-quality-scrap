@@ -1,0 +1,30 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Quality & Scrap Analytics",
+    "section": "",
+    "text": "This project presents a cross-system quality and scrap analysis for a custom sheet metal fabricator operating across five production lines and two shifts. The analysis spans 36 months of production data across five source systems: ERP, MES, QMS, Materials/WMS, and HR.\nQuality and scrap data had never been analyzed in combination across these systems. A data pipeline was built to extract, standardize, and join records into a single analytical layer — surfacing four cross-system patterns that were invisible within any individual source system."
+  },
+  {
+    "objectID": "index.html#about-this-case",
+    "href": "index.html#about-this-case",
+    "title": "Quality & Scrap Analytics",
+    "section": "",
+    "text": "This project presents a cross-system quality and scrap analysis for a custom sheet metal fabricator operating across five production lines and two shifts. The analysis spans 36 months of production data across five source systems: ERP, MES, QMS, Materials/WMS, and HR.\nQuality and scrap data had never been analyzed in combination across these systems. A data pipeline was built to extract, standardize, and join records into a single analytical layer — surfacing four cross-system patterns that were invisible within any individual source system."
+  },
+  {
+    "objectID": "index.html#whats-included",
+    "href": "index.html#whats-included",
+    "title": "Quality & Scrap Analytics",
+    "section": "What’s Included",
+    "text": "What’s Included\nOperations Dashboard A live operating dashboard showing weekly, monthly, and trailing 12-month views of key quality and scrap metrics across the production operation.\nDiagnostic Report A full diagnostic analysis documenting the four cross-system patterns identified, their statistical significance, and their financial impact across the 36-month analysis period."
+  },
+  {
+    "objectID": "index.html#pipeline",
+    "href": "index.html#pipeline",
+    "title": "Quality & Scrap Analytics",
+    "section": "Pipeline",
+    "text": "Pipeline"
+  }
+]

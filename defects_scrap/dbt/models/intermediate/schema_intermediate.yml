@@ -1,0 +1,64 @@
+version: 2
+
+models:
+
+  - name: int_quality__orders_with_inspections
+    description: >
+      Central fact spine joining production work orders to inspection outcomes.
+      One row per work order. Grain is enforced by the unique test on work_order_id.
+    columns:
+      - name: work_order_id
+        tests:
+          - not_null
+          - unique
+      - name: inspection_id
+        tests:
+          - not_null
+          - unique
+      - name: defect_rate
+        description: >
+          quantity_failed / quantity_inspected. NULL where quantity_inspected = 0.
+          A not_null test is intentionally omitted — NULL is a valid value here.
+
+  - name: int_quality__orders_enriched
+    description: >
+      Extends the orders-with-inspections spine with machine, operator, and
+      supplier context. One row per work order. The unique test on work_order_id
+      confirms the MES/HR/WMS joins did not introduce fanout.
+    columns:
+      - name: work_order_id
+        tests:
+          - not_null
+          - unique
+      - name: machine_name
+        description: Confirms the MES join resolved — null here means a machine_id had no match.
+        tests:
+          - not_null
+      - name: operator_name
+        description: Confirms the HR join resolved — null here means an operator_id had no match.
+        tests:
+          - not_null
+      - name: welding_cert_mismatch
+        description: >
+          Derived boolean flag for Pattern 4. not_null confirms the derivation
+          did not silently fail due to a null in requires_welding or welding_cert_current.
+        tests:
+          - not_null
+
+  - name: int_quality__scrap_costs
+    description: >
+      Scrap events joined to the enriched order spine. One row per scrap event.
+      Grain is enforced by the unique test on scrap_id.
+    columns:
+      - name: scrap_id
+        tests:
+          - not_null
+          - unique
+      - name: total_scrap_cost
+        description: Confirms cost data survived the join — null here indicates a staging issue.
+        tests:
+          - not_null
+      - name: scrap_month
+        description: Confirms date truncation produced a valid value for every row.
+        tests:
+          - not_null

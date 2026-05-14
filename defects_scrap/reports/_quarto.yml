@@ -1,0 +1,37 @@
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - dashboard.html
+    - report.html
+
+website:
+  title: "BRIM Systems | Quality & Scrap Analytics"
+  description: "Cross-system quality pattern analysis for a sheet metal fabricator — Elizabeth, NJ"
+  navbar:
+    left:
+      - href: index.html
+        text: Overview
+      - href: dashboard.html
+        text: Dashboard
+      - href: report.html
+        text: Report
+  page-footer:
+    left: "BRIM Systems | Fractional Data Engineering & Analytics"
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 2
+    toc-title: "On this page"
+    code-fold: false
+    echo: false
+    warning: false
+    message: false
+    fig-width: 10
+    fig-height: 5
+    fig-dpi: 120
+
+execute:
+  freeze: auto

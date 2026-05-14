@@ -1,0 +1,12 @@
+{
+  "hash": "46a1135b0daa7e5be22453ebdb06eafa",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"Quality & Scrap Analytics\"\nsubtitle: \"Cross-system pattern analysis — Sheet Metal Fabricator, Elizabeth NJ\"\n---\n\n\n## About This Case\n\nThis report presents a cross-system quality and scrap analysis for a custom sheet\nmetal fabricator operating in Elizabeth, NJ. The analysis spans 36 months of\nproduction data (January 2022 – December 2024) across five source systems: ERP,\nMES, QMS, Materials/WMS, and HR.\n\n**The central finding:** four distinct quality patterns are embedded in the data\nthat are only discoverable by joining across systems. Each pattern was invisible\nin any single source system but becomes clear once the data is connected.\n\n| Pattern | Dimension | Defect Rate Multiplier |\n|---------|-----------|----------------------|\n| P1 | Press Brake × Shift B | 3.4× fleet average |\n| P2 | Supplier C thin-gauge material | 1.9× fleet average |\n| P3 | High-complexity parts | 1.6× fleet average |\n| P4 | Operator with lapsed welding cert | 2.2× fleet average |\n\n---\n\n## Key Metrics\n\n::: {#kpis .cell execution_count=2}\n\n::: {.cell-output .cell-output-stdout}\n```\n\nOverall defect rate:   7.4%\nWork orders analysed:  8,583\nOrders with defects:   98.3%\nTotal scrap cost:      $3,998,480\nHighest defect rate:   Bending\nHighest-risk supplier: Supplier C\n\n```\n:::\n:::\n\n\n---\n\n## Defect Rate Trend\n\n::: {#cell-defect-trend .cell execution_count=3}\n\n::: {.cell-output .cell-output-display}\n![Monthly mean defect rate — January 2022 to December 2024](index_files/figure-html/defect-trend-output-1.png){#defect-trend width=1425 height=464}\n:::\n:::\n\n\n---\n\n## Scrap Cost Trend\n\n::: {#cell-scrap-trend .cell execution_count=4}\n\n::: {.cell-output .cell-output-display}\n![Monthly total scrap cost — January 2022 to December 2024](index_files/figure-html/scrap-trend-output-1.png){#scrap-trend width=1425 height=464}\n:::\n:::\n\n\n---\n\n## Defect Rate by Machine × Shift\n\n::: {#cell-machine-shift-heatmap .cell execution_count=5}\n\n::: {.cell-output .cell-output-display}\n![Mean defect rate heatmap — machine type × shift. Press Brake / Shift B is the highest-risk combination (Pattern 1).](index_files/figure-html/machine-shift-heatmap-output-1.png){#machine-shift-heatmap width=817 height=463}\n:::\n:::\n\n\n---\n\n*Analysis prepared by BRIM Systems.*\n\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}
