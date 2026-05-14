@@ -1,0 +1,146 @@
+version: 2
+
+models:
+
+  - name: stg_mes__machines
+    columns:
+      - name: machine_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_hr__operators
+    columns:
+      - name: operator_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_materials__lots
+    columns:
+      - name: lot_id
+        tests:
+          - not_null
+          - unique
+      - name: cert_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Certified', 'Conditional', 'Missing']
+
+  - name: stg_erp__part_catalog
+    columns:
+      - name: part_number
+        tests:
+          - not_null
+          - unique
+      - name: complexity
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Low', 'Medium', 'High']
+
+  - name: stg_erp__production_orders
+    columns:
+      - name: work_order_id
+        tests:
+          - not_null
+          - unique
+      - name: part_number
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_erp__part_catalog')
+                field: part_number
+      - name: machine_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_mes__machines')
+                field: machine_id
+      - name: operator_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_hr__operators')
+                field: operator_id
+      - name: shift_code
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Shift A', 'Shift B']
+              config:
+                where: "shift_code is not null"
+      - name: complexity
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Low', 'Medium', 'High']
+
+  - name: stg_qms__inspection_records
+    columns:
+      - name: inspection_id
+        tests:
+          - not_null
+          - unique
+      - name: work_order_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_erp__production_orders')
+                field: work_order_id
+      - name: defect_code
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Dimensional'
+                  - 'Surface Scratch'
+                  - 'Burr'
+                  - 'Weld Defect'
+                  - 'Incorrect Material'
+                  - 'Bend Angle'
+                  - 'Porosity'
+                  - 'None'
+      - name: disposition
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Pass', 'Scrap', 'Rework', 'Use-As-Is']
+
+  - name: stg_qms__scrap_events
+    columns:
+      - name: scrap_id
+        tests:
+          - not_null
+          - unique
+      - name: work_order_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_erp__production_orders')
+                field: work_order_id
+      - name: scrap_reason
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - 'OPERATOR_ERROR'
+                  - 'MATERIAL_DEFECT'
+                  - 'MACHINE_ISSUE'
+                  - 'SETUP_ERROR'
+                  - 'DESIGN_ISSUE'
+                  - 'UNKNOWN'
+      - name: defect_code
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Dimensional'
+                  - 'Surface Scratch'
+                  - 'Burr'
+                  - 'Weld Defect'
+                  - 'Incorrect Material'
+                  - 'Bend Angle'
+                  - 'Porosity'
+                  - 'None'

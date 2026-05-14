@@ -234,3 +234,6 @@ modules/*/dashboard/evidence/node_modules/
 # Environment
 .env
 .venv/
+
+# Metadata
+*.egg-info/

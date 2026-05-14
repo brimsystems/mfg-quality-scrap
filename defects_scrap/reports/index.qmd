@@ -1,0 +1,33 @@
+---
+title: "Quality & Scrap Analytics"
+subtitle: "Cross-system pattern analysis — Sheet Metal Fabricator, Elizabeth NJ"
+---
+
+## About This Case
+
+This project presents a cross-system quality and scrap analysis for a custom sheet
+metal fabricator operating across five production lines and two shifts. The analysis
+spans 36 months of production data across five source systems: ERP, MES, QMS,
+Materials/WMS, and HR.
+
+Quality and scrap data had never been analyzed in combination across these systems.
+A data pipeline was built to extract, standardize, and join records into a single
+analytical layer — surfacing four cross-system patterns that were invisible within
+any individual source system.
+
+---
+
+## What's Included
+
+**[Operations Dashboard](dashboard.html)**
+A live operating dashboard showing weekly, monthly, and trailing 12-month views
+of key quality and scrap metrics across the production operation.
+
+**[Diagnostic Report](report.html)**
+A full diagnostic analysis documenting the four cross-system patterns identified,
+their statistical significance, and their financial impact across the 36-month
+analysis period.
+
+---
+
+## Pipeline

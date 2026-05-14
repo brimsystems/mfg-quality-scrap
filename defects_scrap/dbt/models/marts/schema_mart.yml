@@ -1,0 +1,110 @@
+version: 2
+
+models:
+
+  # ── mart_quality__defect_rates ────────────────────────────────────────────
+  - name: mart_quality__defect_rates
+    description: >
+      Primary analytical table for quality performance reporting and ML modeling.
+      One row per work order with all dimensional context, quality metrics, and
+      pre-computed pattern flags attached.
+    columns:
+      - name: work_order_id
+        tests:
+          - not_null
+          - unique
+      - name: inspection_id
+        tests:
+          - not_null
+          - unique
+      - name: is_defect
+        tests:
+          - not_null
+      - name: is_p1_combination
+        tests:
+          - not_null
+      - name: is_p2_supplier
+        tests:
+          - not_null
+      - name: is_p3_complexity
+        tests:
+          - not_null
+      - name: is_p4_cert_mismatch
+        tests:
+          - not_null
+      - name: quantity_inspected
+        tests:
+          - not_null
+      - name: quantity_passed
+        tests:
+          - not_null
+      - name: quantity_failed
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "quantity_passed + quantity_failed = quantity_inspected"
+
+  # ── mart_quality__scrap_summary ───────────────────────────────────────────
+  - name: mart_quality__scrap_summary
+    description: >
+      Scrap event fact table with full dimensional context and derived cost
+      columns. One row per scrap event. Aggregation is handled by Power BI
+      measures rather than pre-aggregated here.
+    columns:
+      - name: scrap_id
+        tests:
+          - not_null
+          - unique
+      - name: total_scrap_cost
+        tests:
+          - not_null
+      - name: material_cost_total
+        tests:
+          - not_null
+      - name: labor_cost_total
+        tests:
+          - not_null
+      - name: is_p1_combination
+        tests:
+          - not_null
+      - name: is_p2_supplier
+        tests:
+          - not_null
+      - name: is_p3_complexity
+        tests:
+          - not_null
+      - name: is_p4_cert_mismatch
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "round(material_cost_total + labor_cost_total, 2) = total_scrap_cost"
+
+
+  # ── mart_quality__operator_performance ────────────────────────────────────
+  - name: mart_quality__operator_performance
+    description: >
+      Operator-level performance summary. One row per operator. Pre-aggregated
+      for the operator scorecard dashboard view.
+    columns:
+      - name: operator_id
+        tests:
+          - not_null
+          - unique
+      - name: total_jobs
+        tests:
+          - not_null
+      - name: mean_defect_rate
+        tests:
+          - not_null
+      - name: peer_mean_defect_rate
+        tests:
+          - not_null
+      - name: defect_rate_vs_peer
+        tests:
+          - not_null
+      - name: total_scrap_cost_attributed
+        tests:
+          - not_null

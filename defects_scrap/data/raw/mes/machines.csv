@@ -1,0 +1,8 @@
+machine_id,machine_name,machine_type,age_years,location
+M01,Laser Cutter 1,Laser Cutting,3,Bay A
+M02,Laser Cutter 2,Laser Cutting,8,Bay A
+M03,Press Brake 1,Bending,12,Bay B
+M04,Press Brake 2,Bending,2,Bay B
+M05,Welding Station 1,Welding,6,Bay C
+M06,Welding Station 2,Welding,4,Bay C
+M07,Punch Press 1,Punching,9,Bay A
