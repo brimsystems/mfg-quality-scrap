@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/f2f7505fa29046529dc6f4b2e48a47ca/artifacts
+end_time: 1779391515798
+entry_point_name: ''
+experiment_id: '784656975370625389'
+lifecycle_stage: active
+run_id: f2f7505fa29046529dc6f4b2e48a47ca
+run_name: random_forest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779391486535
+status: 3
+tags: []
+user_id: codespace

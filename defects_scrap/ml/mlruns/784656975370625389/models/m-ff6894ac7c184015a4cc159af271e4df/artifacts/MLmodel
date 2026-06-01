@@ -1,0 +1,23 @@
+artifact_path: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-ff6894ac7c184015a4cc159af271e4df/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.1
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.11.1
+model_id: m-ff6894ac7c184015a4cc159af271e4df
+model_size_bytes: 113386
+model_uuid: m-ff6894ac7c184015a4cc159af271e4df
+prompts: null
+run_id: 5845abea37c842478070a748a0362cbd
+utc_time_created: '2026-05-21 15:40:40.130275'

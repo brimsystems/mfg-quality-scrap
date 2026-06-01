@@ -1,0 +1,1 @@
+['machine_type', 'machine_id', 'shift_code', 'operator_id', 'complexity', 'material_type', 'supplier', 'lot_cert_status', 'requires_welding']

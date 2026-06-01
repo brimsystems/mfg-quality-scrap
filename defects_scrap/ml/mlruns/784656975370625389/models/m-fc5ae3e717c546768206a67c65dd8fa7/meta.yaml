@@ -1,0 +1,10 @@
+artifact_location: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-fc5ae3e717c546768206a67c65dd8fa7/artifacts
+creation_timestamp: 1779378232528
+experiment_id: '784656975370625389'
+last_updated_timestamp: 1779378235770
+model_id: m-fc5ae3e717c546768206a67c65dd8fa7
+model_type: null
+name: random_forest_pipeline
+source_run_id: 479b0712f60848d6850fda59c52d962f
+status: 2
+status_message: null

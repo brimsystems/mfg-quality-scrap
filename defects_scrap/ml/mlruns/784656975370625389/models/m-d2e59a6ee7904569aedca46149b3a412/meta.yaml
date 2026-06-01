@@ -1,0 +1,10 @@
+artifact_location: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-d2e59a6ee7904569aedca46149b3a412/artifacts
+creation_timestamp: 1779384134498
+experiment_id: '784656975370625389'
+last_updated_timestamp: 1779384146638
+model_id: m-d2e59a6ee7904569aedca46149b3a412
+model_type: null
+name: logistic_regression_pipeline
+source_run_id: ff38d01d0695419080756e86245fe3c8
+status: 2
+status_message: null

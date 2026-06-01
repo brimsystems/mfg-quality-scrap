@@ -1,0 +1,14 @@
+feature,mean_abs_shap
+quantity_ordered,0.5513987
+complexity,0.18988572
+shift_code,0.14153284
+material_type,0.12144588
+machine_age_years,0.097000524
+supplier,0.061151378
+std_labor_hrs,0.058681536
+operator_id,0.058170047
+machine_type,0.016983032
+machine_id,0.011555765
+requires_welding,0.011159508
+schedule_variance_hrs,0.010241898
+lot_cert_status,0.0064018676

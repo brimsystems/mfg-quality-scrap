@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/dffcc042bec84e748d9e57b08c370026/artifacts
+end_time: 1779390405353
+entry_point_name: ''
+experiment_id: '784656975370625389'
+lifecycle_stage: active
+run_id: dffcc042bec84e748d9e57b08c370026
+run_name: scoring_202601
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779390405285
+status: 3
+tags: []
+user_id: codespace

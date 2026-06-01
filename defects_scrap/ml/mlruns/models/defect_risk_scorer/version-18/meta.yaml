@@ -1,0 +1,17 @@
+creation_timestamp: 1779393708270
+current_stage: Archived
+deployment_job_state: null
+description: 'Best model from run ec0960c5f7d34de380c3bfd6f6451044. Type: logistic_regression.
+  Val ROC-AUC: 0.7149. Test ROC-AUC: 0.7294.'
+last_updated_timestamp: 1779398837657
+model_id: m-5d6a14a0ed4b404fb90188a23cb8d28b
+name: defect_risk_scorer
+run_id: 7cc011a2148b4491a636bd0792c3b7d1
+run_link: null
+source: models:/m-5d6a14a0ed4b404fb90188a23cb8d28b
+status: READY
+status_message: null
+storage_location: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-5d6a14a0ed4b404fb90188a23cb8d28b/artifacts
+user_id: null
+version: 18
+workspace: default

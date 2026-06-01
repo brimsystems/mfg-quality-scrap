@@ -1,0 +1,19 @@
+feature,feature_type,drift_detected,p_value,test_method,threshold
+is_high_complexity,interaction,True,0.0001,Jensen-Shannon distance,0.05
+shift_code,categorical,True,0.0051,Jensen-Shannon distance,0.05
+is_lapsed_cert_op,interaction,True,0.0066,Jensen-Shannon distance,0.05
+complexity,categorical,True,0.0073,Jensen-Shannon distance,0.05
+requires_welding,categorical,True,0.0112,Jensen-Shannon distance,0.05
+is_supplier_c_thin_gauge,interaction,True,0.0142,Jensen-Shannon distance,0.05
+material_type,categorical,True,0.0143,Jensen-Shannon distance,0.05
+quantity_ordered,numerical,True,0.0187,Wasserstein distance (normed),0.05
+schedule_variance_hrs,numerical,True,0.0207,Jensen-Shannon distance,0.05
+is_bending_shift_b,interaction,True,0.0231,Jensen-Shannon distance,0.05
+machine_age_years,numerical,True,0.0272,Wasserstein distance (normed),0.05
+machine_type,categorical,True,0.0317,Jensen-Shannon distance,0.05
+machine_id,categorical,True,0.0372,Jensen-Shannon distance,0.05
+std_labor_hrs,numerical,True,0.0471,Wasserstein distance (normed),0.05
+lot_cert_status,categorical,False,0.0699,Jensen-Shannon distance,0.05
+operator_id,categorical,False,0.0717,Jensen-Shannon distance,0.05
+defect_flag,target,False,0.0765,Jensen-Shannon distance,0.05
+supplier,categorical,False,0.0852,Jensen-Shannon distance,0.05

@@ -1,0 +1,59 @@
+feature,mean_abs_shap
+num__quantity_ordered,0.5437560475814317
+num__machine_age_years,0.1168188909301956
+cat__complexity_High,0.11103386532014027
+cat__complexity_Medium,0.106584711609406
+cat__material_type_16ga Steel,0.10225276914223319
+cat__complexity_Low,0.09050845722624133
+cat__shift_code_Shift B,0.06285077636071049
+cat__shift_code_Shift A,0.06021656172101712
+cat__supplier_Supplier C,0.055367726970688036
+cat__material_type_12ga Steel,0.050467697467591936
+cat__machine_type_Bending,0.042207082207927196
+cat__material_type_14ga Steel,0.0366519695163261
+"cat__material_type_3/8"" Plate",0.03530919156235023
+cat__machine_id_M03,0.033389706854055026
+cat__material_type_Stainless 304,0.03332467582086612
+cat__lot_cert_status_Certified,0.02856382556772146
+cat__machine_type_Punching,0.02752793982869027
+cat__machine_id_M07,0.02752793982869027
+num__std_labor_hrs,0.025607966233388006
+cat__machine_id_M06,0.021791965605439036
+cat__machine_id_M02,0.0210817518295832
+cat__material_type_Aluminum 5052,0.02069588385015735
+cat__operator_id_OP003,0.019490596516835837
+cat__operator_id_OP007,0.01833554825619093
+cat__operator_id_OP002,0.015452981032087431
+cat__supplier_Supplier B,0.015018128063472379
+cat__operator_id_OP001,0.014801286471659125
+cat__machine_id_M01,0.01449474281746985
+cat__machine_id_M04,0.01428059432662831
+cat__supplier_Supplier D,0.0135357512156639
+cat__machine_type_Welding,0.011974596959307499
+cat__machine_id_M05,0.01078602817480782
+cat__operator_id_OP009,0.010634815427314924
+num__schedule_variance_hrs,0.009217733279235139
+cat__operator_id_OP012,0.008744125003728611
+cat__supplier_Supplier A,0.007771040672666675
+cat__operator_id_OP019,0.007513894236788426
+cat__requires_welding_True,0.00619302961699622
+cat__operator_id_OP013,0.0048925716576659764
+cat__machine_type_Laser Cutting,0.0048053352545936075
+cat__operator_id_OP011,0.004359406653856449
+cat__operator_id_OP004,0.003926885863289847
+cat__requires_welding_False,0.0036261033361219314
+cat__lot_cert_status_Conditional,0.0034255408414404047
+cat__operator_id_OP015,0.003403533019709592
+cat__operator_id_OP020,0.003071058199748287
+cat__operator_id_OP006,0.0030486418059315883
+cat__operator_id_OP017,0.0026755837106533877
+cat__operator_id_OP014,0.002540046602936971
+cat__operator_id_OP005,0.002212892720371643
+cat__operator_id_OP018,0.0016424360718602293
+cat__operator_id_OP008,0.0013654660992959893
+cat__operator_id_OP016,0.000960142189244201
+"cat__material_type_1/4"" Plate",0.000663588011863059
+cat__operator_id_OP010,0.00014474765854647622
+cat__lot_cert_status_Missing,5.602378252762554e-05
+cat__supplier_None,0.0
+cat__lot_cert_status_None,0.0

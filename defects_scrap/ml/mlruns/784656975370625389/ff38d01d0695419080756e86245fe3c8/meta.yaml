@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/ff38d01d0695419080756e86245fe3c8/artifacts
+end_time: 1779384146641
+entry_point_name: ''
+experiment_id: '784656975370625389'
+lifecycle_stage: active
+run_id: ff38d01d0695419080756e86245fe3c8
+run_name: logistic_regression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779384125220
+status: 3
+tags: []
+user_id: codespace

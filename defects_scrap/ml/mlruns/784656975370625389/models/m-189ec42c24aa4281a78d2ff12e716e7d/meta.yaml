@@ -1,0 +1,10 @@
+artifact_location: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-189ec42c24aa4281a78d2ff12e716e7d/artifacts
+creation_timestamp: 1779378244469
+experiment_id: '784656975370625389'
+last_updated_timestamp: 1779378248086
+model_id: m-189ec42c24aa4281a78d2ff12e716e7d
+model_type: null
+name: xgboost_pipeline
+source_run_id: eff6013497384e57a680d8e9f5d60a05
+status: 2
+status_message: null

@@ -1,0 +1,8 @@
+artifact_location: /workspaces/portfolio/defects_scrap/ml/src/mlruns/833727576054906114
+creation_time: 1779399026646
+experiment_id: '833727576054906114'
+last_update_time: 1779399026646
+lifecycle_stage: active
+name: c01_defect_risk_scorer
+trace_location: null
+workspace: default

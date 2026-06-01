@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/bb7a4149e8b541a0ae76b098f9c32c2a/artifacts
+end_time: 1779384232141
+entry_point_name: ''
+experiment_id: '784656975370625389'
+lifecycle_stage: active
+run_id: bb7a4149e8b541a0ae76b098f9c32c2a
+run_name: xgboost
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779384219214
+status: 3
+tags: []
+user_id: codespace

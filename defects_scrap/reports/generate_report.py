@@ -113,7 +113,6 @@ overall_fr          = fail_rate(dr)
 total_scrap         = sc["total_scrap_cost"].sum()
 total_orders        = len(dr)
 total_inspected     = dr["quantity_inspected"].sum()
-avg_scrap_per_event = sc["total_scrap_cost"].sum() / len(sc)
 
 p1_mask  = (dr["machine_type"]=="Bending") & (dr["shift_code"]=="Shift B")
 p1b_mask = (dr["machine_type"]=="Bending") & (dr["shift_code"]=="Shift A")
@@ -130,18 +129,6 @@ p1_mult = p1_fr / p1b_fr if p1b_fr > 0 else 0
 p2_mult = p2_fr / p2b_fr if p2b_fr > 0 else 0
 p3_mult = p3_fr / p3b_fr if p3b_fr > 0 else 0
 
-def incremental_cost(pattern_mask, baseline_rate):
-    affected        = dr[pattern_mask].copy()
-    actual_failed   = affected["quantity_failed"].sum()
-    expected_failed = affected["quantity_inspected"].sum() * baseline_rate
-    extra_defects   = max(actual_failed - expected_failed, 0)
-    scrap_ratio     = len(sc) / dr["quantity_failed"].sum() if dr["quantity_failed"].sum() > 0 else 1
-    return extra_defects * scrap_ratio * avg_scrap_per_event
-
-p1_inc = incremental_cost(p1_mask,               p1b_fr)
-p2_inc = incremental_cost(p2_mask.fillna(False),  p2b_fr)
-p3_inc = incremental_cost(p3_mask,                p3b_fr)
-annual_incremental = (p1_inc + p2_inc + p3_inc) / 3
 
 # Pre-compute supplier×complexity rates for bullet points
 rates_sup_cx = (
@@ -466,24 +453,6 @@ def chart_p3_historical():
     chart_style(ax); plt.tight_layout(rect=[0, 0.12, 1, 1])
     return fig_to_b64(fig)
 
-def chart_incremental_cost():
-    labels = ["Bending × Shift B","Supplier C\nMaterial","High Complexity\nParts"]
-    annual = [p1_inc/3, p2_inc/3, p3_inc/3]
-    fig, ax = make_fig()
-    bars = ax.barh(labels[::-1], [a/1000 for a in annual[::-1]],
-                   color=BRAND_BLUE, height=0.5)
-    for bar, val in zip(bars, annual[::-1]):
-        ax.text(bar.get_width()+0.3, bar.get_y()+bar.get_height()/2,
-                f"${val/1000:,.0f}K/yr",
-                va="center", fontsize=BODY_FS, fontweight="bold", color=TEXT)
-    ax.set_xlabel("Estimated Incremental Annual Cost ($K)")
-    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"${v:,.0f}K"))
-    ax.yaxis.grid(False)
-    ax.xaxis.grid(True, color="#EEEEEE", linestyle="-", linewidth=0.8)
-    ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_color("#DDDDDD"); ax.spines["bottom"].set_color("#DDDDDD")
-    ax.set_axisbelow(True); plt.tight_layout()
-    return fig_to_b64(fig)
 
 # ── Generate all charts ────────────────────────────────────────────────────
 print("Generating charts...")
@@ -500,7 +469,6 @@ charts = {
     "p3_complexity_bar":  chart_p3_complexity_bar(),
     "p3_cx_machine":      chart_p3_cx_machine(),
     "p3_historical":      chart_p3_historical(),
-    "incremental_cost":   chart_incremental_cost(),
 }
 print("Charts complete.")
 
@@ -523,7 +491,7 @@ def section_title(id, label, title):
       <h2 class="section-title">{title}</h2>
     </div>'''
 
-def finding_block(id, title, mult_label, mult_value, inc_annual):
+def finding_block(id, title, mult_label, mult_value):
     return f'''<div class="finding-block" id="{id}">
       <div class="finding-left"><div class="finding-title">{title}</div></div>
       <div class="finding-right">
@@ -531,10 +499,6 @@ def finding_block(id, title, mult_label, mult_value, inc_annual):
           <div>
             <div class="finding-stat-val">{mult_value}</div>
             <div class="finding-stat-lbl">{mult_label}</div>
-          </div>
-          <div>
-            <div class="finding-stat-val" style="color:{AMBER};">{fmt_usd(inc_annual)}</div>
-            <div class="finding-stat-lbl">est. incremental cost / yr</div>
           </div>
         </div>
       </div>
@@ -715,8 +679,6 @@ html = f'''<!DOCTYPE html>
     <a href="#p2" class="sub">2. Supplier C Material</a>
     <a href="#p3" class="sub">3. High Complexity Parts</a>
     <hr>
-    <a href="#financial">Financial Impact</a>
-    <hr>
     <a href="#methodology">Methodology</a>
   </nav>
 
@@ -738,24 +700,24 @@ html = f'''<!DOCTYPE html>
     surface previously unseen patterns.</p>
 
     <p>As a result of this analysis, three distinct patterns emerged that point to specific,
-    concentrated, and addressable operational drivers of elevated quality cost. These patterns
-    carry a combined estimated <strong>incremental annual cost of {fmt_usd(annual_incremental)}</strong>
-    above what would be expected if those dimensions performed at their respective baseline rates.
+    concentrated, and addressable operational drivers of elevated quality cost.
     Bending operations on Shift B run at <strong>{p1_mult:.1f}×</strong> the defect rate of
     Shift A; material sourced from Supplier C at <strong>{p2_mult:.1f}×</strong> other suppliers;
     and high-complexity parts at <strong>{p3_mult:.1f}×</strong> lower-complexity equivalents.
     None of these patterns were visible within any single source system.</p>
 
+    <p>The financial impact of these elevated defect rates extends well beyond the direct cost
+    of scrapped material. Each defective run also requires rework labor, disrupts downstream scheduling when
+    jobs must be remade, adds inspection overhead, and potentially carries customer relationship costs.</p>
+
     {section_title("findings", "Section 2", "Findings")}
 
     <p>Each finding below represents a defect rate elevation that is statistically significant,
-    consistent across the analysis period, and only quantifiable through cross-system joins.
-    Incremental cost reflects the excess above what would have occurred had that dimension
-    performed at its baseline rate.</p>
+    consistent across the analysis period, and only quantifiable through cross-system joins.</p>
 
     {finding_block("p1",
         "Bending operations on Shift B produce defects at {:.1f}× the rate of Shift A".format(p1_mult),
-        "vs Bending Shift A", f"{p1_mult:.1f}×", p1_inc/3)}
+        "vs Bending Shift A", f"{p1_mult:.1f}×")}
 
     {p1_bullets}
 
@@ -765,7 +727,7 @@ html = f'''<!DOCTYPE html>
 
     {finding_block("p2",
         "Supplier C material is associated with a {:.1f}× elevated defect rate".format(p2_mult),
-        "vs all other suppliers", f"{p2_mult:.1f}×", p2_inc/3)}
+        "vs all other suppliers", f"{p2_mult:.1f}×")}
 
     {p2_bullets}
 
@@ -776,7 +738,7 @@ html = f'''<!DOCTYPE html>
 
     {finding_block("p3",
         "High-complexity parts fail at {:.1f}× the rate of other complexity tiers".format(p3_mult),
-        "vs non-High complexity", f"{p3_mult:.1f}×", p3_inc/3)}
+        "vs non-High complexity", f"{p3_mult:.1f}×")}
 
     {p3_bullets}
 
@@ -784,34 +746,7 @@ html = f'''<!DOCTYPE html>
     {wrap("p3_cx_machine",     "Defect Rate by Complexity × Machine Type")}
     {wrap("p3_historical",     "Monthly Defect Rate by Complexity")}
 
-    {section_title("financial", "Section 3", "Financial Impact")}
-
-    {wrap("incremental_cost", "Estimated Incremental Annual Cost per Pattern")}
-
-    {bullets([
-        f"Combined estimated incremental annual cost across all three patterns: <strong>{fmt_usd(annual_incremental)}</strong>.",
-        f"High complexity parts carry the largest share at <strong>{fmt_usd(p3_inc/3)}/yr</strong>, "
-        "driven by both the magnitude of the rate elevation and the volume of affected work orders.",
-        f"Bending × Shift B carries <strong>{fmt_usd(p1_inc/3)}/yr</strong> despite being a single machine-shift combination.",
-        f"Supplier C material carries <strong>{fmt_usd(p2_inc/3)}/yr</strong> — the most directly addressable pattern, "
-        "as the comparison group (other suppliers) demonstrates the defect rate achievable with better material quality.",
-        "All figures are conservative — direct scrap costs only. Rework labor, machine time on "
-        "defective units, and downstream escape costs are excluded.",
-    ])}
-
-    <div class="cost-callout">
-      <strong>Baseline and methodology:</strong> For each pattern, the baseline rate is the
-      defect rate of the natural comparison group — Bending Shift A for Bending Shift B, all
-      other suppliers for Supplier C, and non-High complexity work orders for High complexity.
-      Comparing against the same machine type, supplier peer group, or complexity peer controls
-      for confounding factors and isolates the specific effect. This is a deliberately conservative
-      approach — comparing against the fleet-wide average would produce larger figures.
-      Incremental cost = (actual defects − expected defects at baseline rate) × average scrap
-      cost per event ({fmt_usd(avg_scrap_per_event)}). Direct scrap costs only — excludes
-      rework, machine time, and downstream escapes.
-    </div>
-
-    {section_title("methodology", "Section 4", "Methodology")}
+    {section_title("methodology", "Section 3", "Methodology")}
 
     <div class="method-item">
       <strong>Data Sources</strong>

@@ -1,0 +1,17 @@
+feature,mean_abs_shap
+quantity_ordered,0.50565404
+complexity,0.1867582
+is_bending_shift_b,0.13041303
+material_type,0.09077193
+shift_code,0.08100139
+is_supplier_c,0.07983983
+is_high_complexity,0.07958648
+std_labor_hrs,0.04803858
+operator_id,0.04553983
+machine_id,0.024740787
+machine_type,0.022069125
+supplier,0.017629279
+lot_cert_status,0.01480604
+machine_age_years,0.014529868
+schedule_variance_hrs,0.008341394
+requires_welding,0.0021065853

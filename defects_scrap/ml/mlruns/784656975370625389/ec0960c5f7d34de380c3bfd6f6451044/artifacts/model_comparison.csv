@@ -1,0 +1,4 @@
+model_type,val_roc_auc,val_f1,val_precision,val_recall
+logistic_regression,0.7149,0.6711,0.6525,0.6907
+xgboost,0.7139,0.6476,0.6796,0.6185
+random_forest,0.7135,0.6781,0.6561,0.7016

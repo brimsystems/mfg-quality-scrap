@@ -1,0 +1,17 @@
+creation_timestamp: 1779384232744
+current_stage: Archived
+deployment_job_state: null
+description: 'Best model from run aeed4c0cb3774f0ab2d73344d3da8245. Type: xgboost.
+  Val ROC-AUC: 0.7118. Test ROC-AUC: 0.7271.'
+last_updated_timestamp: 1779385374331
+model_id: m-6e18f9d90e05436c84191b907be4cc15
+name: defect_risk_scorer
+run_id: bb7a4149e8b541a0ae76b098f9c32c2a
+run_link: null
+source: models:/m-6e18f9d90e05436c84191b907be4cc15
+status: READY
+status_message: null
+storage_location: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-6e18f9d90e05436c84191b907be4cc15/artifacts
+user_id: null
+version: 10
+workspace: default
