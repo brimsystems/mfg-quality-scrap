@@ -7,8 +7,8 @@ from datetime import datetime
 from pathlib import Path
 
 # ── Paths ─────────────────────────────────────────────────────────────────
-# File lives at defects_scrap/data/generate/config.py
-# parent.parent.parent resolves to defects_scrap/
+# File lives at data/generate/config.py
+# parent.parent.parent resolves to the repo root
 MODULE_DIR  = Path(__file__).parent.parent.parent
 RAW_DIR     = MODULE_DIR / "data" / "raw"
 SAMPLES_DIR = MODULE_DIR / "data" / "samples"

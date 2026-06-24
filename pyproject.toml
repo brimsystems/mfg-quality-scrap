@@ -20,6 +20,10 @@ dependencies = [
     "seaborn>=0.13",
     "jupyter>=1.0",
     "ipykernel>=6.0",
+    "xgboost>=2.0",
+    "optuna>=3.0",
+    "prefect>=3.0",
+    "evidently>=0.7",
 ]
 
 [project.optional-dependencies]
@@ -32,4 +36,4 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["defects_scrap*", "cases*", "shared*"]
+include = ["data*", "ml*", "cases*", "shared*"]

@@ -1,38 +1,4 @@
-"""
-BRIM Systems — Case 01: Quality Escapes & Scrap
-Data Generator Entry Point
 
-Manufacturer:  [redact]
-Type:          Custom sheet metal fabricator, ~75 employees, Elizabeth NJ
-Period:        Jan 2023 – Dec 2025 (36 months)
-
-Usage (from repo root):
-    python -m defects_scrap.data.generate.run_generator
-
-Output structure:
-    defects_scrap/data/raw/
-    ├── erp/               ← JobBOSS-style ERP
-    │   ├── production_orders.csv
-    │   └── part_catalog.csv
-    ├── mes/               ← Shop floor data collection
-    │   └── machines.csv
-    ├── qms/               ← Quality management system
-    │   ├── inspection_records.csv
-    │   └── scrap_events.csv
-    ├── materials/         ← Receiving / WMS
-    │   └── material_lots.csv
-    └── hr/                ← HR system (ADP export)
-        └── operators.csv
-
-    defects_scrap/data/samples/
-    └── (same structure — 200-row slices committed to git for demos)
-
-Storage note:
-    data/raw/ is gitignored. Files live in Codespace ephemeral storage.
-    Regenerate at any time with the command above — output is deterministic
-    (seeded) so you always get identical data. data/samples/ is committed
-    to git and always available without regenerating.
-"""
 
 import pandas as pd
 from pathlib import Path
@@ -60,10 +26,6 @@ def _save(df: pd.DataFrame, name: str, base_dir: Path, sample: bool = False) -> 
 
 
 def run() -> None:
-    print("=" * 70)
-    print("BRIM Systems — Case 01: Quality Escapes & Scrap")
-    print("Generating synthetic manufacturing data (36 months)")
-    print("=" * 70)
 
     # ── Generate tables in dependency order ──────────────────────────────
     print("\n[1/7] Machines            (MES)")
@@ -185,7 +147,7 @@ def run() -> None:
     print("Generation complete.")
     print()
     print("Next steps:")
-    print("  git add defects_scrap/data/samples/")
+    print("  git add data/samples/")
     print("  git commit -m 'feat: add m01 sample data files'")
     print("  git push origin feature/m01-data-generator")
     print("=" * 70)

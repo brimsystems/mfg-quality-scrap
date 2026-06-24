@@ -5,34 +5,34 @@ sources:
     tables:
       - name: production_orders
         meta:
-          external_location: "read_csv_auto('/workspaces/portfolio/defects_scrap/data/raw/erp/production_orders.csv')"
+          external_location: "read_csv_auto('/workspaces/mlops_mfg/data/raw/erp/production_orders.csv')"
       - name: part_catalog
         meta:
-          external_location: "read_csv_auto('/workspaces/portfolio/defects_scrap/data/raw/erp/part_catalog.csv')"
+          external_location: "read_csv_auto('/workspaces/mlops_mfg/data/raw/erp/part_catalog.csv')"
 
   - name: mes
     tables:
       - name: machines
         meta:
-          external_location: "read_csv_auto('/workspaces/portfolio/defects_scrap/data/raw/mes/machines.csv')"
+          external_location: "read_csv_auto('/workspaces/mlops_mfg/data/raw/mes/machines.csv')"
 
   - name: qms
     tables:
       - name: inspection_records
         meta:
-          external_location: "read_csv_auto('/workspaces/portfolio/defects_scrap/data/raw/qms/inspection_records.csv')"
+          external_location: "read_csv_auto('/workspaces/mlops_mfg/data/raw/qms/inspection_records.csv')"
       - name: scrap_events
         meta:
-          external_location: "read_csv_auto('/workspaces/portfolio/defects_scrap/data/raw/qms/scrap_events.csv')"
+          external_location: "read_csv_auto('/workspaces/mlops_mfg/data/raw/qms/scrap_events.csv')"
 
   - name: materials
     tables:
       - name: material_lots
         meta:
-          external_location: "read_csv_auto('/workspaces/portfolio/defects_scrap/data/raw/materials/material_lots.csv')"
+          external_location: "read_csv_auto('/workspaces/mlops_mfg/data/raw/materials/material_lots.csv')"
 
   - name: hr
     tables:
       - name: operators
         meta:
-          external_location: "read_csv_auto('/workspaces/portfolio/defects_scrap/data/raw/hr/operators.csv')"
+          external_location: "read_csv_auto('/workspaces/mlops_mfg/data/raw/hr/operators.csv')"

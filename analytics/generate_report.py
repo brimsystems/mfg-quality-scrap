@@ -1,7 +1,7 @@
 """
 generate_report.py
 Generates report.html from mart model data in defects_scrap.duckdb.
-Run from the reports/ directory:
+Run from the analytics/ directory:
     python3 generate_report.py
 Output: report.html
 """
@@ -217,7 +217,7 @@ def chart_p1_boxplot():
     t_stat, p_val = stats.ttest_ind(bend_b, bend_a, equal_var=False)
     fig, ax = make_fig(h=CHART_H_T)
     bp = ax.boxplot([bend_b*100, bend_a*100, other*100],
-               labels=["Bending\nShift B","Bending\nShift A","All Other\nMachines"],
+               tick_labels=["Bending\nShift B","Bending\nShift A","All Other\nMachines"],
                patch_artist=True,
                medianprops=dict(color=BRAND_BLUE, linewidth=2),
                flierprops=dict(marker="o", markersize=3,

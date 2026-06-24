@@ -1,7 +1,7 @@
 """
 generate_dashboard.py
 Generates dashboard.html from mart model data in c01.duckdb.
-Run from the reports/ directory:
+Run from the analytics/ directory:
     python3 generate_dashboard.py
 Output: dashboard.html
 """
