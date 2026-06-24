@@ -1,4 +1,4 @@
-artifact_location: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-ff6894ac7c184015a4cc159af271e4df/artifacts
+artifact_location: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/models/m-ff6894ac7c184015a4cc159af271e4df/artifacts
 creation_timestamp: 1779378040113
 experiment_id: '784656975370625389'
 last_updated_timestamp: 1779378043536

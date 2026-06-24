@@ -11,7 +11,7 @@ run_link: null
 source: models:/m-d0075f8c69414c829b0d6eb3668b7f23
 status: READY
 status_message: null
-storage_location: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-d0075f8c69414c829b0d6eb3668b7f23/artifacts
+storage_location: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/models/m-d0075f8c69414c829b0d6eb3668b7f23/artifacts
 user_id: null
 version: 9
 workspace: default

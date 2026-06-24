@@ -1,4 +1,4 @@
-artifact_path: /workspaces/portfolio/defects_scrap/ml/mlruns/784656975370625389/models/m-6b81a206bf2d4d27a3aa336da6a670f0/artifacts
+artifact_path: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/models/m-6b81a206bf2d4d27a3aa336da6a670f0/artifacts
 flavors:
   python_function:
     env:
