@@ -48,7 +48,7 @@ log = logging.getLogger(__name__)
 # CONFIGURATION
 # ══════════════════════════════════════════════════════════════════════════════
 
-DB_PATH         = Path("../data-source/defects_scrap.duckdb").resolve()
+DB_PATH         = Path("../data_source/defects_scrap.duckdb").resolve()
 FEATURES_DIR    = Path("data/features").resolve()
 SCORING_DIR     = Path("data/scoring")
 MLFLOW_TRACKING = "sqlite:///mlruns/mlflow.db"

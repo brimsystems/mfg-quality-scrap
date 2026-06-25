@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 # ── Paths ──────────────────────────────────────────────────────────────────
-DB_PATH      = Path("../data-source/defects_scrap.duckdb").resolve()
+DB_PATH      = Path("../data_source/defects_scrap.duckdb").resolve()
 SCORING_DIR  = Path("../ml/data/scoring").resolve()
 OUTPUT       = Path("erp_dashboard.html")
 SCORE_DATE   = "2026-04-13"

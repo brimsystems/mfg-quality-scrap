@@ -7,11 +7,11 @@ from datetime import datetime
 from pathlib import Path
 
 # ── Paths ─────────────────────────────────────────────────────────────────
-# File lives at data-source/generate/config.py
+# File lives at data_source/generate/config.py
 # parent.parent.parent resolves to the repo root
 MODULE_DIR  = Path(__file__).parent.parent.parent
-RAW_DIR     = MODULE_DIR / "data-source" / "raw"
-SAMPLES_DIR = MODULE_DIR / "data-source" / "samples"
+RAW_DIR     = MODULE_DIR / "data_source" / "raw"
+SAMPLES_DIR = MODULE_DIR / "data_source" / "samples"
 
 # ── Randomization ─────────────────────────────────────────────────────────
 RANDOM_SEED = 42

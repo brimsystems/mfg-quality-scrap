@@ -47,7 +47,7 @@ log = logging.getLogger(__name__)
 # ══════════════════════════════════════════════════════════════════════════════
 
 FEATURES_DIR     = Path("data/features").resolve()
-DB_PATH          = Path("../data-source/defects_scrap.duckdb").resolve()
+DB_PATH          = Path("../data_source/defects_scrap.duckdb").resolve()
 
 # Split boundaries — must match ml_prep.ipynb documentation
 TRAIN_END        = "2024-12-31"   # Train: Jan 2023 – Dec 2024

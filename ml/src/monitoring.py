@@ -65,7 +65,7 @@ log = logging.getLogger(__name__)
 FEATURES_DIR    = Path("data/features").resolve()
 SCORING_DIR     = Path("data/scoring").resolve()
 MONITORING_DIR  = Path("data/monitoring")
-DB_PATH         = Path("../data-source/defects_scrap.duckdb").resolve()
+DB_PATH         = Path("../data_source/defects_scrap.duckdb").resolve()
 MLFLOW_TRACKING = "sqlite:///mlruns/mlflow.db"
 EXPERIMENT_NAME = "c01_defect_risk_scorer"
 
