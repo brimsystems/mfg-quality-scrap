@@ -1,7 +1,7 @@
 """
 generate_report.py
 Generates report.html from mart model data in defects_scrap.duckdb.
-Run from the analytics/ directory:
+Run from the analytics/reports/ directory:
     python3 generate_report.py
 Output: report.html
 """
@@ -18,7 +18,7 @@ import matplotlib.patches as mpatches
 from scipy import stats
 import base64, io
 
-DB_PATH = Path("../data_source/defects_scrap.duckdb").resolve()
+DB_PATH = Path("../../data_source/defects_scrap.duckdb").resolve()
 OUTPUT  = Path("report.html")
 
 con = duckdb.connect(str(DB_PATH), read_only=True)

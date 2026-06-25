@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
-cd /workspaces/mlops_mfg/analytics
+cd /workspaces/mlops_mfg/analytics/reports
 python3 generate_dashboard.py
 python3 generate_report.py
-cd /workspaces/mlops_mfg/reports
-cp ../analytics/dashboard.html ../analytics/report.html .
+cd /workspaces/mlops_mfg/ml/reports
+cp ../../analytics/reports/dashboard.html ../../analytics/reports/report.html .
 quarto render
 echo "Build complete. Starting server on http://localhost:8080 ..."
 cd _site

@@ -1,7 +1,7 @@
 """
 generate_dashboard.py
 Generates dashboard.html from mart model data in c01.duckdb.
-Run from the analytics/ directory:
+Run from the analytics/reports/ directory:
     python3 generate_dashboard.py
 Output: dashboard.html
 """
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import base64, io
 
-DB_PATH = Path("../data_source/defects_scrap.duckdb").resolve()
+DB_PATH = Path("../../data_source/defects_scrap.duckdb").resolve()
 OUTPUT  = Path("dashboard.html")
 
 con = duckdb.connect(str(DB_PATH), read_only=True)

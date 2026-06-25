@@ -3,7 +3,7 @@ generate_ml_report.py
 Generates ml_report.html — monthly model performance report.
 Pulls from MLflow artifacts and ml/data/scoring/ outputs.
 
-Run from the reports/ directory:
+Run from the ml/reports/ directory:
     python3 generate_ml_report.py
 
 Output: ml_report.html
@@ -28,13 +28,13 @@ import mlflow.sklearn
 from mlflow import MlflowClient
 
 # ── Paths ──────────────────────────────────────────────────────────────────
-ML_DIR       = Path("../ml").resolve()
+ML_DIR       = Path("..").resolve()
 SCORING_DIR  = ML_DIR / "data" / "scoring"
 OUTPUT       = Path("ml_report.html")
 PERIOD_LABEL = "202601"
 PERIOD_NAME  = "January – March 2026"
 
-MLFLOW_TRACKING = str(ML_DIR / "mlruns")
+MLFLOW_TRACKING = f"sqlite:///{ML_DIR}/mlruns/mlflow.db"
 
 # ── Palette — matches generate_report.py exactly ──────────────────────────
 BRAND_BLUE = "#3D5166"
@@ -118,34 +118,51 @@ preds["actual_start"] = pd.to_datetime(preds["actual_start"])
 
 # Parse SHAP drivers (stored as list of dicts)
 def parse_drivers(drivers):
+    if drivers is None:
+        return []
+    # numpy array of dicts — most common format from parquet
+    try:
+        import numpy as np
+        if isinstance(drivers, np.ndarray):
+            return [dict(d) for d in drivers]
+    except Exception:
+        pass
+    if isinstance(drivers, list):
+        return drivers
     if isinstance(drivers, str):
         try:
-            return json.loads(drivers.replace("'", '"'))
+            return json.loads(drivers)
+        except Exception:
+            pass
+        try:
+            import ast
+            result = ast.literal_eval(drivers)
+            return result if isinstance(result, list) else []
         except Exception:
             return []
-    return drivers if isinstance(drivers, list) else []
+    return []
 
 preds["shap_drivers_parsed"] = preds["shap_drivers"].apply(parse_drivers)
 
 # Human-readable driver labels
 DRIVER_LABELS = {
-    "is_bending_shift_b":      "Bending machine on Shift B",
-    "is_high_complexity":      "High complexity part",
-    "is_supplier_c_thin_gauge":"Supplier C thin gauge material",
-    "is_lapsed_cert_op":       "Operator with lapsed certification",
-    "machine_type":            "Machine type",
-    "shift_code":              "Shift assignment",
-    "complexity":              "Part complexity",
-    "supplier":                "Material supplier",
-    "operator_id":             "Operator assignment",
-    "machine_id":              "Machine assignment",
-    "quantity_ordered":        "Production quantity",
-    "machine_age_years":       "Machine age",
-    "std_labor_hrs":           "Estimated labor hours",
-    "lot_cert_status":         "Lot certification status",
-    "material_type":           "Material type",
-    "requires_welding":        "Requires welding",
-    "schedule_variance_hrs":   "Schedule variance",
+    "is_bending_shift_b":      "Press brake job with above-average defect history for this shift configuration",
+    "is_high_complexity":      "High complexity part with tight tolerance requirements",
+    "is_supplier_c_thin_gauge":"Thin gauge material lot with above-average historical defect rate",
+    "is_lapsed_cert_op":       "Historical operator performance associated with elevated defect risk",
+    "machine_type":            "Machine type associated with elevated defect rate",
+    "shift_code":              "Shift configuration with above-average historical defect rate",
+    "complexity":              "Part complexity increases setup sensitivity",
+    "supplier":                "Material source with elevated historical defect rate",
+    "operator_id":             "Operator historical defect rate for this job type",
+    "machine_id":              "Equipment history associated with elevated defect rate",
+    "quantity_ordered":        "Extended production run with above-average historical variation",
+    "machine_age_years":       "Equipment age increases setup sensitivity",
+    "std_labor_hrs":           "Job complexity based on estimated labor requirements",
+    "lot_cert_status":         "Material lot has conditional certification status",
+    "material_type":           "Material grade associated with elevated defect rate",
+    "requires_welding":        "Welding operation increases defect risk",
+    "schedule_variance_hrs":   "Schedule pressure may affect setup quality",
 }
 
 def friendly_driver(feature, direction):
@@ -178,10 +195,11 @@ combined_flagged = high_flagged + med_flagged - sum(
 )
 
 # ── Top flagged jobs for detail table ─────────────────────────────────────
+# Top 15 High + top 15 Medium, sorted by probability within each tier
 top_flagged = (
-    preds[preds["risk_tier"].isin(["High", "Medium"])]
+    preds[preds["risk_tier"] == "High"]
     .sort_values("defect_probability", ascending=False)
-    .head(25)
+    .head(20)
 )
 
 # ── Top 5 highest-risk jobs for plain-English SHAP panel ──────────────────
@@ -313,16 +331,64 @@ def chart_weekly_flags():
     plt.tight_layout()
     return fig_to_b64(fig)
 
+def top_drivers_table():
+    """Ranked table of top risk drivers — no counts, rank order only."""
+    flagged = preds[preds["risk_tier"].isin(["High","Medium"])]
+    driver_counts = flagged["top_driver_feature"].value_counts().head(5)
+
+    SHORT_LABELS = {
+        "is_bending_shift_b":      "Press brake job with above-average defect history for this shift configuration",
+        "is_high_complexity":      "High complexity part with tight tolerances",
+        "is_supplier_c_thin_gauge":"Thin gauge material lot with above-average historical defect rate",
+        "is_lapsed_cert_op":       "Historical operator performance associated with elevated defect risk",
+        "machine_type":            "Machine type associated with elevated defect rate",
+        "shift_code":              "Shift configuration with above-average historical defect rate",
+        "complexity":              "Part complexity increases setup sensitivity",
+        "supplier":                "Material source with elevated historical defect rate",
+        "operator_id":             "Operator historical defect rate for this job type",
+        "machine_id":              "Equipment history associated with elevated defect rate",
+        "quantity_ordered":        "Large batch size with accumulated defect risk",
+        "machine_age_years":       "Equipment age increases setup sensitivity",
+        "std_labor_hrs":           "Job complexity based on estimated labor requirements",
+        "lot_cert_status":         "Material lot has conditional certification status",
+        "material_type":           "Material grade associated with elevated defect rate",
+        "requires_welding":        "Welding operation increases defect risk",
+        "schedule_variance_hrs":   "Schedule pressure may affect setup quality",
+    }
+
+    rows = ""
+    for i, (feat, _) in enumerate(driver_counts.items(), 1):
+        label = SHORT_LABELS.get(feat, feat.replace("_"," ").title())
+        bg    = "#F7F8FA" if i % 2 == 0 else "white"
+        rows += f"""<tr style="background:{bg};">
+          <td style="width:40px;text-align:center;font-weight:700;
+                     font-size:16px;color:{BRAND_BLUE};padding:12px 8px;">
+            #{i}
+          </td>
+          <td style="padding:12px 16px;font-size:15px;color:#333;line-height:1.4;">
+            {label}
+          </td>
+        </tr>"""
+
+    return f"""<table class="data-table" style="font-size:15px;margin:16px 0;">
+      <thead><tr>
+        <th style="width:40px;text-align:center;">Rank</th>
+        <th>Risk Driver</th>
+      </tr></thead>
+      <tbody>{rows}</tbody>
+    </table>"""
 
 print("Generating charts...")
 charts = {
     "risk_distribution":   chart_risk_distribution(),
     "prob_distribution":   chart_probability_distribution(),
     "accuracy_by_tier":    chart_accuracy_by_tier(),
-    "top_drivers":         chart_top_drivers(),
     "weekly_flags":        chart_weekly_flags(),
 }
+
 print("Charts complete.")
+
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HTML HELPERS
@@ -385,11 +451,26 @@ def flagged_jobs_table():
         tier    = row["risk_tier"]
         color   = RED if tier == "High" else AMBER
         drivers = parse_drivers(row["shap_drivers"])
-        top_d   = drivers[0] if drivers else {}
-        driver_label = DRIVER_LABELS.get(
-            top_d.get("feature",""), 
-            str(top_d.get("feature","—")).replace("_"," ").title()
-        )
+
+        # Build driver pills — up to 3, ERP-style general language
+        driver_html = ""
+        for d in drivers[:3]:
+            feat  = d.get("feature", "")
+            label = DRIVER_LABELS.get(feat, feat.replace("_"," ").title())
+            direc = d.get("direction", "increases_risk")
+            arrow = "↑" if direc == "increases_risk" else "↓"
+            bg    = "#fff0f0" if direc == "increases_risk" else "#f0f8f0"
+            bc    = "#f0b0b0" if direc == "increases_risk" else "#a0d0a0"
+            tc    = "#800000" if direc == "increases_risk" else "#005000"
+            driver_html += (
+                f'<div style="background:{bg};border:1px solid {bc};color:{tc};'
+                f'border-radius:3px;padding:2px 6px;margin:2px 0;font-size:11px;'
+                f'white-space:normal;line-height:1.3;">'
+                f'{label}</div>'
+            )
+        if not driver_html:
+            driver_html = '<span style="color:#999;">—</span>'
+
         outcome = row.get("actual_defect_flag", None)
         if outcome is None:
             outcome_html = '<span style="color:#999;">—</span>'
@@ -399,17 +480,27 @@ def flagged_jobs_table():
             outcome_html = f'<span style="color:{GREEN};font-weight:700;">Clean</span>'
 
         rows += f'''<tr>
-          <td style="font-family:monospace;font-size:13px;">{row[ID_COL]}</td>
-          <td>{row["actual_start"].strftime("%b %d")}</td>
-          <td><span class="tier-badge" style="background:{color};">{tier}</span></td>
-          <td style="text-align:right;font-weight:700;">{row["defect_probability"]:.1%}</td>
-          <td>{driver_label}</td>
-          <td>{outcome_html}</td>
+          <td style="font-family:monospace;font-size:11px;white-space:nowrap;">{row[ID_COL]}</td>
+          <td style="white-space:nowrap;">{row["actual_start"].strftime("%b %d")}</td>
+          <td style="white-space:nowrap;"><span class="tier-badge" style="background:{color};">{tier}</span></td>
+          <td style="text-align:right;font-weight:700;white-space:nowrap;">{row["defect_probability"]:.1%}</td>
+          <td style="white-space:normal;padding:4px 8px;">{driver_html}</td>
+          <td style="white-space:nowrap;">{outcome_html}</td>
         </tr>'''
-    return f'''<table class="data-table" style="font-size:14px;">
+    return f'''<table class="data-table" style="font-size:13px;table-layout:fixed;width:100%;">
+      <colgroup>
+        <col style="width:105px;">
+        <col style="width:52px;">
+        <col style="width:65px;">
+        <col style="width:85px;">
+        <col style="width:auto;">
+        <col style="width:80px;">
+      </colgroup>
       <thead><tr>
-        <th>Work Order</th><th>Date</th><th>Risk Tier</th>
-        <th>Probability</th><th>Top Driver</th><th>Actual Outcome</th>
+        <th>Work Order</th><th>Date</th><th>Tier</th>
+        <th style="text-align:right;">Probability</th>
+        <th>Risk Drivers</th>
+        <th>Outcome</th>
       </tr></thead>
       <tbody>{rows}</tbody>
     </table>'''
@@ -594,8 +685,8 @@ html = f'''<!DOCTYPE html>
     <a href="#summary">Executive Summary</a>
     <hr>
     <a href="#scoring">Scoring Summary</a>
-    <a href="#flags" class="sub">Flagged Jobs</a>
-    <a href="#drivers" class="sub">Why Jobs Were Flagged</a>
+    <hr>
+    <a href="#risk_drivers">Top Risk Drivers</a>
     <hr>
     <a href="#accuracy">Accuracy Retrospective</a>
   </nav>
@@ -609,26 +700,13 @@ html = f'''<!DOCTYPE html>
     The model flagged <strong>{fmt_num(high_flagged)}</strong> jobs as High risk
     ({fmt_pct(high_flagged/total_scored)} of all jobs) and
     <strong>{fmt_num(med_flagged)}</strong> as Medium risk
-    ({fmt_pct(med_flagged/total_scored)} of all jobs). The actual defect rate
-    across all scored jobs was <strong>{fmt_pct(actual_defect_rate)}</strong>.</p>
-
-    <p>Of the {fmt_num(high_flagged)} High-risk flags,
+    ({fmt_pct(med_flagged/total_scored)} of all jobs). Of the {fmt_num(high_flagged)} High-risk flags,
     <strong>{high_tp}</strong> genuinely produced defective output —
     a precision rate of <strong>{fmt_pct(high_precision)}</strong>.
     {high_fp} flags were false alarms. At the Medium tier,
     <strong>{fmt_pct(med_precision)}</strong> of flags were correct.
     Every flag includes an explanation of the specific conditions that drove
     the risk score, enabling targeted pre-production intervention.</p>
-
-    <p>The financial impact of quality failures extends beyond the direct cost
-    of scrapped parts. Each defective run also consumes machine time that
-    produced no good output, requires rework labor often at premium rates,
-    disrupts downstream scheduling when jobs must be remade, and — where
-    defects reach the customer — carries relationship costs that do not appear
-    in any scrap log. The {fmt_num(high_tp)} High-risk jobs correctly identified
-    by the model represent quality events where pre-production intervention
-    could have reduced setup risk, allowed material substitution, or prompted
-    operator reassignment before the first part was cut.</p>
 
     {kpi_row(
         kpi_card(fmt_num(total_scored), "Jobs Scored", PERIOD_NAME),
@@ -653,24 +731,15 @@ html = f'''<!DOCTYPE html>
     {wrap("weekly_flags", "Weekly Risk Tier Distribution",
           "Flagged job volume across the scoring period. Stable distribution indicates consistent model operation.")}
 
-    {section_title("flags", "Section 2.1", "Flagged Jobs Detail")}
+    {section_title("risk_drivers", "Section 3", "Top Risk Drivers")}
 
-    <p>The table below shows the top {len(top_flagged)} highest-risk jobs from the scoring
-    period, sorted by predicted defect probability. The Top Driver column identifies
-    the single most influential factor in the model's risk assessment for each job.</p>
+    <div class="chart-title" style="margin-bottom:8px;">Top Risk Drivers</div>
+    {top_drivers_table()}
 
+    <div class="chart-title" style="margin:28px 0 8px 0;">Top High-Risk Flagged Jobs Detail</div>
     {flagged_jobs_table()}
 
-    {section_title("drivers", "Section 2.2", "Why Jobs Were Flagged")}
-
-    {wrap("top_drivers", "Most Common Top Risk Driver Across Flagged Jobs",
-          "The feature most responsible for each job's risk score, counted across all High and Medium tier flags.")}
-
-    <p>The five highest-risk jobs this period and the factors driving their scores:</p>
-
-    {shap_explanation_panel()}
-
-    {section_title("accuracy", "Section 3", "Accuracy Retrospective")}
+    {section_title("accuracy", "Section 4", "Accuracy Retrospective")}
 
     <p>Because this scoring period covers historical data with known outcomes,
     we can evaluate how accurately the model's flags mapped to actual defect events.

@@ -6,7 +6,7 @@ with embedded pre-production defect risk scores.
 Shows April 13, 2026 active work orders as they would appear in a
 live manufacturing ERP with the defect risk scorer integrated.
 
-Run from the reports/ directory:
+Run from the ml/reports/ directory:
     python3 generate_erp_dashboard.py
 
 Output: erp_dashboard.html
@@ -19,8 +19,8 @@ import pandas as pd
 import numpy as np
 
 # ── Paths ──────────────────────────────────────────────────────────────────
-DB_PATH      = Path("../data_source/defects_scrap.duckdb").resolve()
-SCORING_DIR  = Path("../ml/data/scoring").resolve()
+DB_PATH      = Path("../../data_source/defects_scrap.duckdb").resolve()
+SCORING_DIR  = Path("../data/scoring").resolve()
 OUTPUT       = Path("erp_dashboard.html")
 SCORE_DATE   = "2026-04-13"
 
