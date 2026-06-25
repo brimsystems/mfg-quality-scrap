@@ -1,12 +1,18 @@
 """
 scoring.py
 Pre-production defect risk scorer — batch scoring pipeline.
-Loads the registered production model from MLflow, scores all work orders
-in the specified backfill period, computes per-job SHAP drivers, joins
-actual outcomes, and writes prediction outputs for Part 4 reporting.
+Loads the registered production model from MLflow, scores work orders in each
+monitoring period, computes per-job SHAP drivers, joins actual outcomes, and
+writes prediction outputs for Part 4 reporting.
+
+Scoring runs once per calendar month so that prediction and performance can be
+tracked longitudinally rather than as a single blended quarter. Each month is
+an independent run with its own MLflow lineage, mirroring a scheduled monthly
+batch.
 
 Run from the ml/ directory:
-    python3 src/scoring.py
+    python3 src/scoring.py              # scores all configured periods
+    # or score a single period programmatically via scoring_flow(start, end)
 
 Outputs written to ml/data/scoring/:
     predictions_YYYYMM.parquet   — scored work orders with SHAP drivers
@@ -42,18 +48,22 @@ log = logging.getLogger(__name__)
 # CONFIGURATION
 # ══════════════════════════════════════════════════════════════════════════════
 
-DB_PATH         = Path("../data/defects_scrap.duckdb").resolve()
+DB_PATH         = Path("../data-source/defects_scrap.duckdb").resolve()
 FEATURES_DIR    = Path("data/features").resolve()
 SCORING_DIR     = Path("data/scoring")
-MLFLOW_TRACKING = "mlruns"
+MLFLOW_TRACKING = "sqlite:///mlruns/mlflow.db"
 EXPERIMENT_NAME = "c01_defect_risk_scorer"
 MODEL_NAME      = "defect_risk_scorer"
 MODEL_STAGE     = "Production"
 N_SHAP_DRIVERS  = 3     # top N SHAP features to include per work order
 
-# Backfill period — Jan–Mar 2026
-SCORE_START = "2026-01-01"
-SCORE_END   = "2026-03-31"
+# Monitoring periods — one calendar month each. Scored and monitored
+# independently so prediction/performance drift can be tracked month over month.
+PERIODS = [
+    ("2026-01-01", "2026-01-31"),
+    ("2026-02-01", "2026-02-28"),
+    ("2026-03-01", "2026-03-31"),
+]
 
 # Risk tier thresholds applied to predicted probability
 RISK_THRESHOLDS = {"High": 0.75, "Medium": 0.65}
@@ -111,14 +121,14 @@ def load_scoring_data(start: str, end: str) -> pd.DataFrame:
     df = con.execute(query).df()
     con.close()
 
-    # Derive interaction features — mirrors ml_prep engineer_features()
-    df = engineer_features(df)
-
     if len(df) == 0:
         raise RuntimeError(
             f"No work orders found between {start} and {end}. "
             "Verify data generation covered this period."
         )
+
+    # Derive interaction features — mirrors ml_prep engineer_features()
+    df = engineer_features(df)
 
     log.info(f"Loaded {len(df):,} work orders for scoring period {start} → {end}")
     log.info(f"  defect_flag rate (actuals): {df[TARGET].mean():.1%}")
@@ -228,11 +238,14 @@ def compute_shap_drivers(pipeline, df: pd.DataFrame) -> pd.DataFrame:
 
 
 @task(name="build_accuracy_summary")
-def build_accuracy_summary(df: pd.DataFrame) -> pd.DataFrame:
+def build_accuracy_summary(df: pd.DataFrame, period_label: str) -> pd.DataFrame:
     """
     Compute precision, recall, and counts by risk tier using actual outcomes.
     Precision: of jobs flagged at this tier, what fraction actually failed?
     Recall: of all actual failures, what fraction were flagged at this tier or above?
+
+    period_label is carried on every row so the three monthly summaries
+    concatenate cleanly into a longitudinal performance view.
     """
     rows        = []
     all_positive = df[TARGET].sum()
@@ -248,6 +261,7 @@ def build_accuracy_summary(df: pd.DataFrame) -> pd.DataFrame:
         recall        = true_pos / all_positive if all_positive > 0 else 0.0
 
         rows.append({
+            "period_label":    period_label,
             "risk_tier":       tier,
             "threshold":       threshold,
             "jobs_flagged":    len(flagged),
@@ -259,7 +273,7 @@ def build_accuracy_summary(df: pd.DataFrame) -> pd.DataFrame:
         })
 
     summary = pd.DataFrame(rows)
-    log.info("\nAccuracy summary:")
+    log.info("Accuracy summary:")
     log.info(summary.to_string(index=False))
     return summary
 
@@ -272,8 +286,7 @@ def write_outputs(df: pd.DataFrame,
     Write predictions and accuracy summary to ml/data/scoring/.
     Returns file paths for MLflow logging.
     """
-    # Predictions — drop raw target to keep output clean,
-    # but keep actual_defect_flag as the ground truth column
+    # Predictions — keep actual_defect_flag as the ground truth column
     output_cols = [
         ID_COL, "actual_start", "defect_probability", "risk_tier",
         "shap_drivers", "top_driver_feature", "top_driver_direction",
@@ -288,7 +301,7 @@ def write_outputs(df: pd.DataFrame,
     pred_df.to_parquet(pred_path, index=False)
     summary.to_csv(summary_path, index=False)
 
-    log.info(f"Predictions written to:     {pred_path}")
+    log.info(f"Predictions written to:      {pred_path}")
     log.info(f"Accuracy summary written to: {summary_path}")
     return pred_path, summary_path
 
@@ -302,20 +315,22 @@ def log_scoring_run_to_mlflow(
     model_version: str,
     source_run_id: str,
     period_label: str,
+    start_date: str,
+    end_date: str,
 ) -> str:
     """
     Log the scoring run as a new MLflow run under the same experiment.
-    Logs metadata, accuracy metrics, and output files as artifacts.
+    Tags carry the actual period dates so each monthly run is self-describing.
     """
     mlflow.set_tracking_uri(MLFLOW_TRACKING)
     mlflow.set_experiment(EXPERIMENT_NAME)
 
     with mlflow.start_run(run_name=f"scoring_{period_label}") as run:
-        # Tags
+        # Tags — use the dates actually scored, not module-level defaults
         mlflow.set_tags({
             "run_type":        "scoring",
-            "scoring_start":   SCORE_START,
-            "scoring_end":     SCORE_END,
+            "scoring_start":   start_date,
+            "scoring_end":     end_date,
             "model_version":   str(model_version),
             "source_run_id":   source_run_id,
             "rows_scored":     len(df),
@@ -355,39 +370,73 @@ def log_scoring_run_to_mlflow(
 # FLOW
 # ══════════════════════════════════════════════════════════════════════════════
 
-@flow(name="defect_risk_scoring", log_prints=True)
-def scoring_flow(
-    start_date: str = SCORE_START,
-    end_date:   str = SCORE_END,
+def _run_period(
+    pipeline,
+    model_version,
+    source_run_id,
+    start_date: str,
+    end_date: str,
 ) -> None:
     """
-    Batch scoring flow for the defect risk scorer.
-    Scores all work orders in the specified date range, computes SHAP
-    drivers, joins actuals, and writes outputs for client reporting.
+    Score a single period end to end.
+
+    Plain helper (not a flow) so it can be driven by either the single-period
+    or all-periods flow without nesting flow runs or passing the model across
+    a flow-run boundary. The @task calls below execute within whichever flow
+    invokes this helper.
     """
     period_label = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y%m")
+    log.info(f"Scoring period {period_label}: {start_date} → {end_date}")
 
-    log.info(f"Starting scoring flow: {start_date} → {end_date}")
-    log.info(f"Model: {MODEL_NAME} ({MODEL_STAGE})")
-
-    pipeline, model_version, source_run_id = load_model()
     df      = load_scoring_data(start_date, end_date)
     df      = score_work_orders(pipeline, df)
     df      = compute_shap_drivers(pipeline, df)
-    summary = build_accuracy_summary(df)
+    summary = build_accuracy_summary(df, period_label)
 
     pred_path, summary_path = write_outputs(df, summary, period_label)
 
     log_scoring_run_to_mlflow(
         df, summary, pred_path, summary_path,
-        model_version, source_run_id, period_label
+        model_version, source_run_id, period_label,
+        start_date, end_date,
     )
 
+    log.info(f"  Period {period_label} complete — {len(df):,} scored, "
+             f"{df['risk_tier'].eq('High').sum():,} High-risk")
+
+
+@flow(name="defect_risk_scoring", log_prints=True)
+def scoring_flow(start_date: str, end_date: str) -> None:
+    """
+    Batch scoring flow for a single period (standalone entry point).
+    Loads the Production model and scores [start_date, end_date].
+    """
+    log.info(f"Starting single-period scoring: {start_date} → {end_date}")
+    pipeline, model_version, source_run_id = load_model()
+    log.info(f"Model: {MODEL_NAME} ({MODEL_STAGE})")
+
+    _run_period(pipeline, model_version, source_run_id, start_date, end_date)
+
     log.info("Scoring flow complete.")
-    log.info(f"  Scored:     {len(df):,} work orders")
-    log.info(f"  High risk:  {df['risk_tier'].eq('High').sum():,} jobs flagged")
-    log.info(f"  Period:     {period_label}")
+
+
+@flow(name="defect_risk_scoring_all_periods", log_prints=True)
+def score_all_periods(periods: list = PERIODS) -> None:
+    """
+    Score every configured monitoring period in sequence, loading the
+    Production model once and reusing it across months. No nested flows —
+    each period runs through the shared _run_period helper within this flow.
+    """
+    log.info(f"Scoring {len(periods)} period(s): "
+             f"{', '.join(s for s, _ in periods)}")
+
+    pipeline, model_version, source_run_id = load_model()
+
+    for start_date, end_date in periods:
+        _run_period(pipeline, model_version, source_run_id, start_date, end_date)
+
+    log.info("All scoring periods complete.")
 
 
 if __name__ == "__main__":
-    scoring_flow()
+    score_all_periods()

@@ -147,7 +147,7 @@ def run() -> None:
     print("Generation complete.")
     print()
     print("Next steps:")
-    print("  git add data/samples/")
+    print("  git add data-source/samples/")
     print("  git commit -m 'feat: add m01 sample data files'")
     print("  git push origin feature/m01-data-generator")
     print("=" * 70)

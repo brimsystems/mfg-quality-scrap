@@ -47,13 +47,13 @@ log = logging.getLogger(__name__)
 # ══════════════════════════════════════════════════════════════════════════════
 
 FEATURES_DIR     = Path("data/features").resolve()
-DB_PATH          = Path("../data/defects_scrap.duckdb").resolve()
+DB_PATH          = Path("../data-source/defects_scrap.duckdb").resolve()
 
 # Split boundaries — must match ml_prep.ipynb documentation
 TRAIN_END        = "2024-12-31"   # Train: Jan 2023 – Dec 2024
 VAL_END          = "2025-06-30"   # Val:   Jan 2025 – Jun 2025
                                   # Test:  Jul 2025 – Dec 2025
-MLFLOW_TRACKING  = "mlruns"          # or "mlruns" for local
+MLFLOW_TRACKING  = "sqlite:///mlruns/mlflow.db"          # or "mlruns" for local
 EXPERIMENT_NAME  = "c01_defect_risk_scorer"
 MODEL_NAME       = "defect_risk_scorer"
 N_TRIALS         = 150          # Optuna trials per model
@@ -158,6 +158,30 @@ def load_splits() -> tuple:
     log.info(f"Test:       {len(X_test):,} rows  |  defect_flag rate: {y_test.mean():.1%}")
 
     return X_train, y_train, X_val, y_val, X_test, y_test, feature_cols
+
+
+def export_validation_reference(pipeline, X_val: pd.DataFrame, y_val: pd.Series) -> None:
+    """
+    Score the validation split with the selected production model and persist
+    the predicted-probability distribution as a frozen reference.
+
+    This is the baseline for prediction drift in monitoring: each scoring
+    period's predicted-probability distribution is compared against the model's
+    behaviour on held-out validation data. Validation (not the training set) is
+    used as the reference so the baseline reflects generalisation rather than
+    fit, which is the more honest comparison point.
+    """
+    val_probs = pipeline.predict_proba(X_val)[:, 1]
+    ref = pd.DataFrame({
+        "defect_probability": np.round(val_probs, 4),
+        TARGET:               y_val.astype(int).values,
+    })
+    path = FEATURES_DIR / "validation_predictions.parquet"
+    ref.to_parquet(path, index=False)
+    log.info(f"Validation reference (prediction-drift baseline): "
+             f"{len(ref):,} rows  →  {path.name}")
+    log.info(f"  mean predicted probability: {val_probs.mean():.4f}  |  "
+             f"defect_flag rate: {y_val.mean():.1%}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -663,6 +687,10 @@ def main():
             mlflow.set_tag("best_val_roc_auc", f"{best_result['val_roc_auc']:.4f}")
             log.info(f"\nBest model: {best_model_type} "
                      f"(val_roc_auc={best_result['val_roc_auc']:.4f})")
+
+            # ── Persist validation-set predictions as the prediction-drift
+            #    reference for monitoring (frozen at training time) ───────────
+            export_validation_reference(best_pipeline, X_val, y_val)
 
             # ── Final evaluation on test set (touched once) ────────────────
             log.info("Evaluating best model on test set...")

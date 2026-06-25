@@ -18,7 +18,7 @@ import matplotlib.patches as mpatches
 from scipy import stats
 import base64, io
 
-DB_PATH = Path("../data/defects_scrap.duckdb").resolve()
+DB_PATH = Path("../data-source/defects_scrap.duckdb").resolve()
 OUTPUT  = Path("report.html")
 
 con = duckdb.connect(str(DB_PATH), read_only=True)

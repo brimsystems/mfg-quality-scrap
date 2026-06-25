@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import base64, io
 
-DB_PATH = Path("../data/defects_scrap.duckdb").resolve()
+DB_PATH = Path("../data-source/defects_scrap.duckdb").resolve()
 OUTPUT  = Path("dashboard.html")
 
 con = duckdb.connect(str(DB_PATH), read_only=True)
