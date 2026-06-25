@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/e09035c5cc0a410f98bd29378e3a7e50/artifacts
+end_time: 1781643329637
+entry_point_name: ''
+experiment_id: '784656975370625389'
+lifecycle_stage: active
+run_id: e09035c5cc0a410f98bd29378e3a7e50
+run_name: xgboost
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1781643320543
+status: 3
+tags: []
+user_id: codespace

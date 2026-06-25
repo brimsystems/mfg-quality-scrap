@@ -1,0 +1,10 @@
+artifact_location: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/models/m-fa2cbf64798646e3b36df5d345b4af1c/artifacts
+creation_timestamp: 1781643325609
+experiment_id: '784656975370625389'
+last_updated_timestamp: 1781643329633
+model_id: m-fa2cbf64798646e3b36df5d345b4af1c
+model_type: null
+name: xgboost_pipeline
+source_run_id: e09035c5cc0a410f98bd29378e3a7e50
+status: 2
+status_message: null

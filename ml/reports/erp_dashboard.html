@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetroFab Industries — Work Orders</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, sans-serif;
+      font-size: 12px;
+      background: #E8E9EC;
+      color: #1a1a1a;
+    }
+
+    /* ── Application header ── */
+    .app-header {
+      background: linear-gradient(to bottom, #1c3a5e, #163050);
+      color: white;
+      padding: 0;
+      border-bottom: 2px solid #0d1f35;
+    }
+    .app-header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .app-logo {
+      font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
+      color: white;
+    }
+    .app-logo span {
+      font-weight: 300; font-size: 12px; opacity: 0.7; margin-left: 8px;
+    }
+    .app-user {
+      font-size: 11px; opacity: 0.8;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .app-user .date { opacity: 0.6; }
+
+    /* ── Module navigation tabs ── */
+    .app-nav {
+      display: flex; align-items: flex-end;
+      padding: 0 8px;
+      background: #1c3a5e;
+    }
+    .nav-tab {
+      padding: 7px 16px 6px 16px;
+      font-size: 11px; font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.1s;
+      user-select: none;
+    }
+    .nav-tab:hover { color: rgba(255,255,255,0.9); }
+    .nav-tab.active {
+      color: white;
+      border-bottom: 2px solid #5b9bd5;
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      background: #f5f5f5;
+      border-bottom: 1px solid #d0d0d0;
+      padding: 5px 16px;
+      font-size: 11px;
+      color: #666;
+    }
+    .breadcrumb a { color: #1c5fa0; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb .sep { margin: 0 5px; color: #aaa; }
+
+    /* ── Main content ── */
+    .main { padding: 10px 14px 24px 14px; }
+
+    /* ── Page title bar ── */
+    .page-title-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .page-title {
+      font-size: 14px; font-weight: 700; color: #1a1a1a;
+    }
+    .page-subtitle {
+      font-size: 11px; color: #666; margin-top: 1px;
+    }
+    .risk-summary {
+      display: flex; align-items: center; gap: 12px;
+      background: white;
+      border: 1px solid #d0d0d0;
+      border-radius: 3px;
+      padding: 6px 14px;
+      font-size: 11px;
+    }
+    .risk-summary-item { display: flex; align-items: center; gap: 5px; }
+    .risk-summary-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 2px;
+      background: #f0f0f0;
+      border: 1px solid #c8c8c8;
+      border-bottom: none;
+      padding: 4px 6px;
+      border-radius: 3px 3px 0 0;
+    }
+    .tb-btn {
+      padding: 3px 10px;
+      font-size: 11px;
+      background: linear-gradient(to bottom, #ffffff, #e8e8e8);
+      border: 1px solid #b0b0b0;
+      border-radius: 2px;
+      cursor: pointer;
+      color: #1a1a1a;
+      white-space: nowrap;
+    }
+    .tb-btn:hover { background: linear-gradient(to bottom, #e8f0fc, #d0e0f8); border-color: #7aabde; }
+    .tb-btn:disabled, .tb-btn.disabled {
+      color: #aaa; cursor: default;
+      background: linear-gradient(to bottom, #f5f5f5, #ebebeb);
+    }
+    .tb-sep { width: 1px; background: #c0c0c0; height: 20px; margin: 0 4px; }
+    .tb-right { margin-left: auto; }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: #fafafa;
+      border: 1px solid #c8c8c8;
+      border-bottom: none;
+      padding: 5px 8px;
+    }
+    .filter-label { font-size: 11px; color: #555; white-space: nowrap; }
+    .filter-select {
+      font-size: 11px; padding: 2px 18px 2px 4px;
+      border: 1px solid #b0b0b0; border-radius: 2px;
+      background: white; color: #1a1a1a;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 4px center;
+      padding-right: 16px;
+    }
+    .filter-search {
+      font-size: 11px; padding: 2px 6px;
+      border: 1px solid #b0b0b0; border-radius: 2px;
+      width: 200px;
+    }
+    .filter-search:focus { outline: none; border-color: #5b9bd5; }
+
+    /* ── Table ── */
+    .table-wrap {
+      border: 1px solid #c8c8c8;
+      border-radius: 0 0 3px 3px;
+      overflow-x: auto;
+      background: white;
+    }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 11.5px;
+    }
+    thead tr {
+      background: linear-gradient(to bottom, #f0f0f0, #e4e4e4);
+      border-bottom: 2px solid #b8b8b8;
+    }
+    th {
+      padding: 6px 8px; text-align: left;
+      font-size: 11px; font-weight: 600; color: #333;
+      white-space: nowrap;
+      border-right: 1px solid #d8d8d8;
+      cursor: pointer;
+      user-select: none;
+    }
+    th:last-child { border-right: none; }
+    th .sort-arrow { color: #999; margin-left: 3px; font-size: 9px; }
+    th.risk-col {
+      background: linear-gradient(to bottom, #e8eef6, #dce5f0);
+      color: #1c3a5e;
+    }
+
+    .wo-row td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #eeeeee;
+      border-right: 1px solid #f0f0f0;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .wo-row td:last-child { border-right: none; }
+    .wo-row:nth-child(even) td { background: #f8f8f8; }
+    .wo-row:nth-child(odd) td { background: white; }
+    .wo-row:hover td { background: #e8f0fb !important; }
+    .wo-row.row-high td { background: #fff5f5 !important; }
+    .wo-row.row-high:hover td { background: #ffe8e8 !important; }
+    .wo-row.row-med td { background: #fffbf0 !important; }
+    .wo-row.row-med:hover td { background: #fff3d6 !important; }
+
+    .mono { font-family: "Courier New", Courier, monospace; font-size: 11px; }
+    .num  { text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ── Status badges ── */
+    .status-badge {
+      display: inline-block; padding: 1px 6px;
+      border-radius: 2px; font-size: 10px; font-weight: 600;
+    }
+    .status-open   { background: #e8f0e8; color: #2a6a2a; border: 1px solid #b8d8b8; }
+    .status-inprog { background: #e0ecf8; color: #1a4a80; border: 1px solid #aaccee; }
+    .status-hold   { background: #f8e8d0; color: #804010; border: 1px solid #e0c090; }
+
+    /* ── Risk badges ── */
+    .risk-badge {
+      display: inline-block; padding: 2px 7px;
+      border-radius: 2px; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .risk-high { background: #b94040; color: white; }
+    .risk-med  { background: #c87941; color: white; }
+    .risk-low  { background: #4a7c59; color: white; }
+    .expand-icon { color: #666; font-size: 9px; margin-left: 4px; }
+
+    /* ── Expanded panel ── */
+    .panel-row td { padding: 0; border-bottom: 2px solid #c8c8c8; }
+    .risk-panel {
+      background: #f8f8f8;
+      border-top: 1px solid #e0e0e0;
+    }
+    .panel-header {
+      padding: 8px 14px;
+      background: white;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .panel-title {
+      font-size: 12px; color: #333;
+    }
+    .panel-body {
+      display: flex; gap: 0; padding: 0;
+    }
+    .panel-col {
+      flex: 1; padding: 12px 16px;
+      border-right: 1px solid #e0e0e0;
+    }
+    .panel-col:last-of-type { border-right: none; }
+    .panel-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #888; margin-bottom: 8px;
+    }
+    .risk-factor {
+      display: flex; align-items: flex-start; gap: 8px;
+      margin-bottom: 8px; font-size: 12px; color: #333; line-height: 1.4;
+    }
+    .factor-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #1c3a5e; color: white;
+      font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+    .action-box {
+      background: #fffbe6; border: 1px solid #f0d060;
+      border-radius: 2px; padding: 7px 10px;
+      font-size: 11.5px; color: #5a4000;
+    }
+    .detail-grid {
+      display: grid; grid-template-columns: auto 1fr;
+      gap: 4px 10px; font-size: 11px;
+    }
+    .detail-label { color: #888; font-weight: 600; }
+    .panel-actions {
+      display: flex; flex-direction: column;
+      justify-content: center; gap: 6px;
+      padding: 12px 16px;
+      background: #f0f0f0;
+      border-left: 1px solid #e0e0e0;
+      min-width: 160px;
+    }
+    .erp-btn {
+      padding: 5px 12px; font-size: 11px;
+      background: linear-gradient(to bottom, #ffffff, #e8e8e8);
+      border: 1px solid #b0b0b0; border-radius: 2px;
+      cursor: pointer; color: #1a1a1a; text-align: center;
+    }
+    .erp-btn:hover { background: linear-gradient(to bottom, #e8f0fc, #d0e0f8); border-color: #7aabde; }
+    .erp-btn-primary {
+      background: linear-gradient(to bottom, #2060b0, #1a4a90);
+      color: white; border-color: #1a4a90;
+    }
+    .erp-btn-primary:hover { background: linear-gradient(to bottom, #2870c0, #1e54a0); }
+
+    /* ── ML badge in column header ── */
+    .ml-tag {
+      display: inline-block;
+      font-size: 8px; font-weight: 700;
+      background: #1c3a5e; color: white;
+      padding: 1px 4px; border-radius: 2px;
+      margin-left: 4px; vertical-align: middle;
+      letter-spacing: 0.3px;
+    }
+    .info-icon {
+      color: #5b9bd5; font-size: 10px;
+      cursor: help; margin-left: 2px;
+    }
+
+    /* ── Status bar ── */
+    .status-bar {
+      background: #e0e0e0;
+      border-top: 1px solid #c0c0c0;
+      padding: 3px 14px;
+      font-size: 10px; color: #555;
+      display: flex; gap: 16px; align-items: center;
+    }
+    .status-bar .sep { color: #bbb; }
+  </style>
+</head>
+<body>
+
+<!-- ── Application Header ── -->
+<div class="app-header">
+  <div class="app-header-top">
+    <div class="app-logo">
+      MetroFab Industries
+      <span>Enterprise Resource Planning</span>
+    </div>
+    <div class="app-user">
+      <span>&#128100; J. Martinez (Production Supervisor)</span>
+      <span class="date">&#128197; Thursday, January 01, 2026</span>
+    </div>
+  </div>
+  <div class="app-nav">
+    <div class="nav-tab">Dashboard</div>
+    <div class="nav-tab active">Work Orders</div>
+    <div class="nav-tab">Scheduling</div>
+    <div class="nav-tab">Inventory</div>
+    <div class="nav-tab">Quality</div>
+    <div class="nav-tab">Purchasing</div>
+    <div class="nav-tab">Reports</div>
+    <div class="nav-tab">Admin</div>
+  </div>
+</div>
+
+<!-- ── Breadcrumb ── -->
+<div class="breadcrumb">
+  <a href="#">Production</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="#">Work Orders</a>
+  <span class="sep">&rsaquo;</span>
+  Active Queue
+</div>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <div class="page-title-bar">
+    <div>
+      <div class="page-title">Work Order Queue — Active</div>
+      <div class="page-subtitle">All open and in-progress work orders &middot; 01/01/2026</div>
+    </div>
+    <div class="risk-summary">
+      <span style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Defect Risk Summary</span>
+      <span class="sep" style="color:#ddd;">&nbsp;|&nbsp;</span>
+      <div class="risk-summary-item">
+        <span class="risk-summary-dot" style="background:#b94040;"></span>
+        <strong style="color:#b94040;">6</strong>&nbsp;High
+      </div>
+      <div class="risk-summary-item">
+        <span class="risk-summary-dot" style="background:#c87941;"></span>
+        <strong style="color:#c87941;">4</strong>&nbsp;Medium
+      </div>
+      <div class="risk-summary-item">
+        <span class="risk-summary-dot" style="background:#4a7c59;"></span>
+        <strong style="color:#4a7c59;">25</strong>&nbsp;Low
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toolbar ── -->
+  <div class="toolbar">
+    <button class="tb-btn">&#43; New WO</button>
+    <button class="tb-btn disabled" disabled>Edit</button>
+    <button class="tb-btn disabled" disabled>Delete</button>
+    <span class="tb-sep"></span>
+    <button class="tb-btn">Release</button>
+    <button class="tb-btn">Hold</button>
+    <button class="tb-btn">Print Traveler</button>
+    <span class="tb-sep"></span>
+    <button class="tb-btn">Export</button>
+    <button class="tb-btn tb-right">&#8635; Refresh</button>
+  </div>
+
+  <!-- ── Filter bar ── -->
+  <div class="filter-bar">
+    <span class="filter-label">Date:</span>
+    <select class="filter-select"><option>01/01/2026</option></select>
+    <span class="filter-label">Machine:</span>
+    <select class="filter-select"><option>All</option></select>
+    <span class="filter-label">Shift:</span>
+    <select class="filter-select"><option>All</option></select>
+    <span class="filter-label">Status:</span>
+    <select class="filter-select"><option>Active</option></select>
+    <span class="filter-label">Risk:</span>
+    <select class="filter-select"><option>All</option><option>High</option><option>Medium</option></select>
+    <input type="text" class="filter-search" placeholder="&#128269; Search work orders...">
+  </div>
+
+  <!-- ── Table ── -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>WO # <span class="sort-arrow">&#9650;</span></th>
+          <th>Status</th>
+          <th>Part #</th>
+          <th>Description</th>
+          <th>Customer</th>
+          <th class="num">Qty</th>
+          <th>Machine</th>
+          <th>Operator</th>
+          <th>Shift</th>
+          <th>Sched Start</th>
+          <th class="num">Est Hrs</th>
+          <th>Complexity</th>
+          <th>Material</th>
+          <th class="risk-col">
+            &#9873; Defect Risk
+            <span class="ml-tag">ML</span>
+            <span class="info-icon" title="Pre-production risk score. Powered by BRIM Defect Risk Scorer v1. Click flagged rows for detail.">&#9432;</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        
+    <tr class="wo-row row-high" id="row-0" onclick="togglePanel(0)" style="cursor:pointer;">
+      <td class="mono">WO-18591</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1022</td>
+      <td>Fabricated Component</td>
+      <td>Customer G</td>
+      <td class="num">24</td>
+      <td>Press Brake 1</td>
+      <td>K. Thomas</td>
+      <td>Shift B</td>
+      <td class="mono">02:25 PM</td>
+      <td class="num">1.0</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-high">&#9679; HIGH</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-0" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #b94040;">
+            <div class="panel-title">
+              <span style="color:#b94040;font-weight:700;">&#9873; HIGH RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18591 &nbsp;&middot;&nbsp;
+              Fabricated Component &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>76%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Bending setup conditions associated with higher-than-average rework rate</div><div class="risk-factor"><span class="factor-num">2</span>Equipment age increases setup sensitivity on second shift</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Supervisor setup review required before job release</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Press Brake 1 (M03)</span>
+                <span class="detail-label">Operator:</span><span>K. Thomas</span>
+                <span class="detail-label">Shift:</span><span>Shift B</span>
+                <span class="detail-label">Material:</span><span>Stainless 304</span>
+                <span class="detail-label">Lot Status:</span><span>Certified</span>
+                <span class="detail-label">Complexity:</span><span>Medium</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-high" id="row-1" onclick="togglePanel(1)" style="cursor:pointer;">
+      <td class="mono">WO-18587</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1014</td>
+      <td>Pivot Arm</td>
+      <td>Customer A</td>
+      <td class="num">25</td>
+      <td>Press Brake 2</td>
+      <td>C. Moore</td>
+      <td>Shift B</td>
+      <td class="mono">03:44 PM</td>
+      <td class="num">0.6</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>12ga Steel</td>
+      <td><span class="risk-badge risk-high">&#9679; HIGH</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-1" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #b94040;">
+            <div class="panel-title">
+              <span style="color:#b94040;font-weight:700;">&#9873; HIGH RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18587 &nbsp;&middot;&nbsp;
+              Pivot Arm &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>88%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Bending setup conditions associated with higher-than-average rework rate</div><div class="risk-factor"><span class="factor-num">2</span>Material supply source has elevated historical defect rate</div><div class="risk-factor"><span class="factor-num">3</span>Assigned operator has compliance certification gap</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Supervisor setup review required before job release</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Press Brake 2 (M04)</span>
+                <span class="detail-label">Operator:</span><span>C. Moore</span>
+                <span class="detail-label">Shift:</span><span>Shift B</span>
+                <span class="detail-label">Material:</span><span>12ga Steel</span>
+                <span class="detail-label">Lot Status:</span><span>Certified</span>
+                <span class="detail-label">Complexity:</span><span>Low</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-high" id="row-2" onclick="togglePanel(2)" style="cursor:pointer;">
+      <td class="mono">WO-18606</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1033</td>
+      <td>Fabricated Component</td>
+      <td>Customer F</td>
+      <td class="num">24</td>
+      <td>Press Brake 2</td>
+      <td>L. Anderson</td>
+      <td>Shift A</td>
+      <td class="mono">07:18 AM</td>
+      <td class="num">4.5</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-high">&#9679; HIGH</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-2" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #b94040;">
+            <div class="panel-title">
+              <span style="color:#b94040;font-weight:700;">&#9873; HIGH RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18606 &nbsp;&middot;&nbsp;
+              Fabricated Component &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>77%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Material supply source has elevated historical defect rate</div><div class="risk-factor"><span class="factor-num">2</span>Assigned operator has compliance certification gap</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Supervisor setup review required before job release</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Press Brake 2 (M04)</span>
+                <span class="detail-label">Operator:</span><span>L. Anderson</span>
+                <span class="detail-label">Shift:</span><span>Shift A</span>
+                <span class="detail-label">Material:</span><span>Stainless 304</span>
+                <span class="detail-label">Lot Status:</span><span>Certified</span>
+                <span class="detail-label">Complexity:</span><span>Medium</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-high" id="row-3" onclick="togglePanel(3)" style="cursor:pointer;">
+      <td class="mono">WO-18607</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1022</td>
+      <td>Fabricated Component</td>
+      <td>Customer G</td>
+      <td class="num">11</td>
+      <td>Press Brake 1</td>
+      <td>E. White</td>
+      <td>Shift B</td>
+      <td class="mono">02:21 PM</td>
+      <td class="num">1.0</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-high">&#9679; HIGH</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-3" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #b94040;">
+            <div class="panel-title">
+              <span style="color:#b94040;font-weight:700;">&#9873; HIGH RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18607 &nbsp;&middot;&nbsp;
+              Fabricated Component &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>77%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Bending setup conditions associated with higher-than-average rework rate</div><div class="risk-factor"><span class="factor-num">2</span>Material supply source has elevated historical defect rate</div><div class="risk-factor"><span class="factor-num">3</span>Assigned operator has compliance certification gap</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Supervisor setup review required before job release</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Press Brake 1 (M03)</span>
+                <span class="detail-label">Operator:</span><span>E. White</span>
+                <span class="detail-label">Shift:</span><span>Shift B</span>
+                <span class="detail-label">Material:</span><span>Stainless 304</span>
+                <span class="detail-label">Lot Status:</span><span>Certified</span>
+                <span class="detail-label">Complexity:</span><span>Medium</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-high" id="row-4" onclick="togglePanel(4)" style="cursor:pointer;">
+      <td class="mono">WO-18604</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1005</td>
+      <td>Door Frame, 16ga</td>
+      <td>Customer C</td>
+      <td class="num">24</td>
+      <td>Punch Press 1</td>
+      <td>K. Thomas</td>
+      <td>Shift B</td>
+      <td class="mono">03:46 PM</td>
+      <td class="num">3.1</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>16ga Steel</td>
+      <td><span class="risk-badge risk-high">&#9679; HIGH</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-4" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #b94040;">
+            <div class="panel-title">
+              <span style="color:#b94040;font-weight:700;">&#9873; HIGH RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18604 &nbsp;&middot;&nbsp;
+              Door Frame, 16ga &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>81%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Material supply source has elevated historical defect rate</div><div class="risk-factor"><span class="factor-num">2</span>Equipment age increases setup sensitivity on second shift</div><div class="risk-factor"><span class="factor-num">3</span>Thin gauge material requires precise feed pressure</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Supervisor setup review required before job release</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Punch Press 1 (M07)</span>
+                <span class="detail-label">Operator:</span><span>K. Thomas</span>
+                <span class="detail-label">Shift:</span><span>Shift B</span>
+                <span class="detail-label">Material:</span><span>16ga Steel</span>
+                <span class="detail-label">Lot Status:</span><span>Certified</span>
+                <span class="detail-label">Complexity:</span><span>Low</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-high" id="row-5" onclick="togglePanel(5)" style="cursor:pointer;">
+      <td class="mono">WO-18615</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1021</td>
+      <td>Fabricated Component</td>
+      <td>Customer C</td>
+      <td class="num">7</td>
+      <td>Press Brake 1</td>
+      <td>L. Anderson</td>
+      <td>Shift A</td>
+      <td class="mono">06:43 AM</td>
+      <td class="num">4.8</td>
+      <td><span style="color:#b94040;font-weight:600;">High</span></td>
+      <td>14ga Steel</td>
+      <td><span class="risk-badge risk-high">&#9679; HIGH</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-5" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #b94040;">
+            <div class="panel-title">
+              <span style="color:#b94040;font-weight:700;">&#9873; HIGH RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18615 &nbsp;&middot;&nbsp;
+              Fabricated Component &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>78%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>High complexity part on aging equipment (12 yrs old)</div><div class="risk-factor"><span class="factor-num">2</span>Material supply source has elevated historical defect rate</div><div class="risk-factor"><span class="factor-num">3</span>Assigned operator has compliance certification gap</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Supervisor setup review required before job release</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Press Brake 1 (M03)</span>
+                <span class="detail-label">Operator:</span><span>L. Anderson</span>
+                <span class="detail-label">Shift:</span><span>Shift A</span>
+                <span class="detail-label">Material:</span><span>14ga Steel</span>
+                <span class="detail-label">Lot Status:</span><span>Certified</span>
+                <span class="detail-label">Complexity:</span><span>High</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-med" id="row-6" onclick="togglePanel(6)" style="cursor:pointer;">
+      <td class="mono">WO-18582</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1008</td>
+      <td>Support Channel</td>
+      <td>Customer G</td>
+      <td class="num">15</td>
+      <td>Welding Station 1</td>
+      <td>E. White</td>
+      <td>Shift B</td>
+      <td class="mono">02:04 PM</td>
+      <td class="num">2.0</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>3/8" Plate</td>
+      <td><span class="risk-badge risk-med">&#9679; MED</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-6" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #c87941;">
+            <div class="panel-title">
+              <span style="color:#c87941;font-weight:700;">&#9873; MEDIUM RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18582 &nbsp;&middot;&nbsp;
+              Support Channel &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>68%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Material lot has conditional certification status</div><div class="risk-factor"><span class="factor-num">2</span>Assigned operator has compliance certification gap</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Review setup conditions before starting first piece</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Welding Station 1 (M05)</span>
+                <span class="detail-label">Operator:</span><span>E. White</span>
+                <span class="detail-label">Shift:</span><span>Shift B</span>
+                <span class="detail-label">Material:</span><span>3/8" Plate</span>
+                <span class="detail-label">Lot Status:</span><span>Missing</span>
+                <span class="detail-label">Complexity:</span><span>Low</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-med" id="row-7" onclick="togglePanel(7)" style="cursor:pointer;">
+      <td class="mono">WO-18603</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1019</td>
+      <td>Cover Plate, 3/8"</td>
+      <td>Customer E</td>
+      <td class="num">11</td>
+      <td>Welding Station 2</td>
+      <td>H. Garcia</td>
+      <td>Shift A</td>
+      <td class="mono">07:12 AM</td>
+      <td class="num">0.8</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>16ga Steel</td>
+      <td><span class="risk-badge risk-med">&#9679; MED</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-7" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #c87941;">
+            <div class="panel-title">
+              <span style="color:#c87941;font-weight:700;">&#9873; MEDIUM RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18603 &nbsp;&middot;&nbsp;
+              Cover Plate, 3/8" &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>70%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Material lot has conditional certification status</div><div class="risk-factor"><span class="factor-num">2</span>Assigned operator has compliance certification gap</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Review setup conditions before starting first piece</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Welding Station 2 (M06)</span>
+                <span class="detail-label">Operator:</span><span>H. Garcia</span>
+                <span class="detail-label">Shift:</span><span>Shift A</span>
+                <span class="detail-label">Material:</span><span>16ga Steel</span>
+                <span class="detail-label">Lot Status:</span><span>Conditional</span>
+                <span class="detail-label">Complexity:</span><span>Medium</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-med" id="row-8" onclick="togglePanel(8)" style="cursor:pointer;">
+      <td class="mono">WO-18605</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1034</td>
+      <td>Fabricated Component</td>
+      <td>Customer E</td>
+      <td class="num">17</td>
+      <td>Laser Cutter 2</td>
+      <td>C. Moore</td>
+      <td>Shift B</td>
+      <td class="mono">02:10 PM</td>
+      <td class="num">2.4</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>12ga Steel</td>
+      <td><span class="risk-badge risk-med">&#9679; MED</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-8" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #c87941;">
+            <div class="panel-title">
+              <span style="color:#c87941;font-weight:700;">&#9873; MEDIUM RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18605 &nbsp;&middot;&nbsp;
+              Fabricated Component &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>74%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>Material lot has conditional certification status</div><div class="risk-factor"><span class="factor-num">2</span>Assigned operator has compliance certification gap</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Review setup conditions before starting first piece</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Laser Cutter 2 (M02)</span>
+                <span class="detail-label">Operator:</span><span>C. Moore</span>
+                <span class="detail-label">Shift:</span><span>Shift B</span>
+                <span class="detail-label">Material:</span><span>12ga Steel</span>
+                <span class="detail-label">Lot Status:</span><span>Missing</span>
+                <span class="detail-label">Complexity:</span><span>Medium</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row row-med" id="row-9" onclick="togglePanel(9)" style="cursor:pointer;">
+      <td class="mono">WO-18623</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1026</td>
+      <td>Fabricated Component</td>
+      <td>Customer D</td>
+      <td class="num">15</td>
+      <td>Welding Station 2</td>
+      <td>N. Rodriguez</td>
+      <td>Shift A</td>
+      <td class="mono">06:43 AM</td>
+      <td class="num">4.7</td>
+      <td><span style="color:#b94040;font-weight:600;">High</span></td>
+      <td>14ga Steel</td>
+      <td><span class="risk-badge risk-med">&#9679; MED</span> <span class="expand-icon">&#9660;</span></td>
+    </tr>
+    <tr class="panel-row" id="panel-9" style="display:none;">
+      <td colspan="14">
+        <div class="risk-panel">
+          <div class="panel-header" style="border-left:4px solid #c87941;">
+            <div class="panel-title">
+              <span style="color:#c87941;font-weight:700;">&#9873; MEDIUM RISK</span>
+              &nbsp;&mdash;&nbsp; WO-18623 &nbsp;&middot;&nbsp;
+              Fabricated Component &nbsp;&middot;&nbsp;
+              <span style="color:#555;">Predicted defect probability: <strong>71%</strong></span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-col">
+              <div class="panel-section-label">Risk Factors</div>
+              <div class="risk-factor"><span class="factor-num">1</span>High complexity part requiring tight tolerances</div><div class="risk-factor"><span class="factor-num">2</span>Thin gauge material requires precise feed pressure</div>
+            </div>
+            <div class="panel-col">
+              <div class="panel-section-label">Recommended Action</div>
+              <div class="action-box">Review setup conditions before starting first piece</div>
+              <div class="panel-section-label" style="margin-top:12px;">Job Details</div>
+              <div class="detail-grid">
+                <span class="detail-label">Machine:</span><span>Welding Station 2 (M06)</span>
+                <span class="detail-label">Operator:</span><span>N. Rodriguez</span>
+                <span class="detail-label">Shift:</span><span>Shift A</span>
+                <span class="detail-label">Material:</span><span>14ga Steel</span>
+                <span class="detail-label">Lot Status:</span><span>Certified</span>
+                <span class="detail-label">Complexity:</span><span>High</span>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="erp-btn">Acknowledge</button>
+              <button class="erp-btn">Add Note</button>
+              <button class="erp-btn erp-btn-primary">Override &amp; Release</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="wo-row " id="row-10"  style="">
+      <td class="mono">WO-18584</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1016</td>
+      <td>Cable Tray Section</td>
+      <td>Customer G</td>
+      <td class="num">12</td>
+      <td>Welding Station 1</td>
+      <td>O. Lewis</td>
+      <td>Shift A</td>
+      <td class="mono">06:00 AM</td>
+      <td class="num">4.1</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>14ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-11"  style="">
+      <td class="mono">WO-18581</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1030</td>
+      <td>Fabricated Component</td>
+      <td>Customer G</td>
+      <td class="num">25</td>
+      <td>Welding Station 2</td>
+      <td>O. Lewis</td>
+      <td>Shift A</td>
+      <td class="mono">06:14 AM</td>
+      <td class="num">2.1</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>12ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-12"  style="">
+      <td class="mono">WO-18585</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1009</td>
+      <td>Terminal Box Lid</td>
+      <td>Customer A</td>
+      <td class="num">5</td>
+      <td>Welding Station 1</td>
+      <td>M. Davis</td>
+      <td>Shift A</td>
+      <td class="mono">06:14 AM</td>
+      <td class="num">4.9</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>12ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-13"  style="">
+      <td class="mono">WO-18588</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1016</td>
+      <td>Cable Tray Section</td>
+      <td>Customer G</td>
+      <td class="num">5</td>
+      <td>Welding Station 1</td>
+      <td>P. Walker</td>
+      <td>Shift A</td>
+      <td class="mono">06:14 AM</td>
+      <td class="num">4.1</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>14ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-14"  style="">
+      <td class="mono">WO-18593</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1000</td>
+      <td>Mounting Bracket, 14ga</td>
+      <td>Customer B</td>
+      <td class="num">13</td>
+      <td>Press Brake 1</td>
+      <td>Q. Hall</td>
+      <td>Shift A</td>
+      <td class="mono">07:09 AM</td>
+      <td class="num">2.0</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-15"  style="">
+      <td class="mono">WO-18580</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1006</td>
+      <td>Equipment Stand</td>
+      <td>Customer B</td>
+      <td class="num">17</td>
+      <td>Laser Cutter 2</td>
+      <td>Q. Hall</td>
+      <td>Shift A</td>
+      <td class="mono">07:14 AM</td>
+      <td class="num">2.6</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>1/4" Plate</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-16"  style="">
+      <td class="mono">WO-18592</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1017</td>
+      <td>End Cap Assembly</td>
+      <td>Customer D</td>
+      <td class="num">5</td>
+      <td>Laser Cutter 1</td>
+      <td>T. Johnson</td>
+      <td>Shift A</td>
+      <td class="mono">07:24 AM</td>
+      <td class="num">4.9</td>
+      <td><span style="color:#b94040;font-weight:600;">High</span></td>
+      <td>Aluminum 5052</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-17"  style="">
+      <td class="mono">WO-18586</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1007</td>
+      <td>Gusset Plate</td>
+      <td>Customer B</td>
+      <td class="num">17</td>
+      <td>Laser Cutter 2</td>
+      <td>T. Johnson</td>
+      <td>Shift A</td>
+      <td class="mono">07:48 AM</td>
+      <td class="num">0.8</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>16ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-18"  style="">
+      <td class="mono">WO-18579</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1024</td>
+      <td>Fabricated Component</td>
+      <td>Customer E</td>
+      <td class="num">16</td>
+      <td>Laser Cutter 1</td>
+      <td>I. Lee</td>
+      <td>Shift B</td>
+      <td class="mono">02:20 PM</td>
+      <td class="num">3.1</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>16ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-19"  style="">
+      <td class="mono">WO-18589</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1031</td>
+      <td>Fabricated Component</td>
+      <td>Customer B</td>
+      <td class="num">19</td>
+      <td>Welding Station 1</td>
+      <td>R. Martinez</td>
+      <td>Shift B</td>
+      <td class="mono">02:58 PM</td>
+      <td class="num">3.4</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>1/4" Plate</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-20"  style="">
+      <td class="mono">WO-18583</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1017</td>
+      <td>End Cap Assembly</td>
+      <td>Customer D</td>
+      <td class="num">11</td>
+      <td>Laser Cutter 1</td>
+      <td>S. Williams</td>
+      <td>Shift B</td>
+      <td class="mono">03:21 PM</td>
+      <td class="num">4.9</td>
+      <td><span style="color:#b94040;font-weight:600;">High</span></td>
+      <td>Aluminum 5052</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-21"  style="">
+      <td class="mono">WO-18590</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1020</td>
+      <td>Fabricated Component</td>
+      <td>Customer A</td>
+      <td class="num">18</td>
+      <td>Welding Station 2</td>
+      <td>I. Lee</td>
+      <td>Shift B</td>
+      <td class="mono">03:24 PM</td>
+      <td class="num">3.4</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>Aluminum 5052</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-22"  style="">
+      <td class="mono">WO-18600</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1025</td>
+      <td>Fabricated Component</td>
+      <td>Customer C</td>
+      <td class="num">6</td>
+      <td>Welding Station 2</td>
+      <td>H. Garcia</td>
+      <td>Shift A</td>
+      <td class="mono">06:07 AM</td>
+      <td class="num">4.8</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-23"  style="">
+      <td class="mono">WO-18599</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1013</td>
+      <td>Weld Nut Plate</td>
+      <td>Customer D</td>
+      <td class="num">24</td>
+      <td>Laser Cutter 2</td>
+      <td>M. Davis</td>
+      <td>Shift A</td>
+      <td class="mono">06:28 AM</td>
+      <td class="num">2.9</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-24"  style="">
+      <td class="mono">WO-18595</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1033</td>
+      <td>Fabricated Component</td>
+      <td>Customer F</td>
+      <td class="num">6</td>
+      <td>Press Brake 2</td>
+      <td>M. Davis</td>
+      <td>Shift A</td>
+      <td class="mono">07:13 AM</td>
+      <td class="num">4.5</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-25"  style="">
+      <td class="mono">WO-18602</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1015</td>
+      <td>Guard Shield</td>
+      <td>Customer D</td>
+      <td class="num">23</td>
+      <td>Punch Press 1</td>
+      <td>O. Lewis</td>
+      <td>Shift A</td>
+      <td class="mono">07:21 AM</td>
+      <td class="num">3.7</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>3/8" Plate</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-26"  style="">
+      <td class="mono">WO-18596</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1019</td>
+      <td>Cover Plate, 3/8"</td>
+      <td>Customer E</td>
+      <td class="num">10</td>
+      <td>Welding Station 2</td>
+      <td>M. Davis</td>
+      <td>Shift A</td>
+      <td class="mono">07:57 AM</td>
+      <td class="num">0.8</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>16ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-27"  style="">
+      <td class="mono">WO-18597</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1022</td>
+      <td>Fabricated Component</td>
+      <td>Customer G</td>
+      <td class="num">13</td>
+      <td>Press Brake 1</td>
+      <td>G. Martin</td>
+      <td>Shift B</td>
+      <td class="mono">02:12 PM</td>
+      <td class="num">1.0</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-28"  style="">
+      <td class="mono">WO-18594</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1003</td>
+      <td>Enclosure Cover</td>
+      <td>Customer D</td>
+      <td class="num">16</td>
+      <td>Press Brake 2</td>
+      <td>I. Lee</td>
+      <td>Shift B</td>
+      <td class="mono">02:45 PM</td>
+      <td class="num">4.6</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>1/4" Plate</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-29"  style="">
+      <td class="mono">WO-18598</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1016</td>
+      <td>Cable Tray Section</td>
+      <td>Customer G</td>
+      <td class="num">18</td>
+      <td>Welding Station 1</td>
+      <td>R. Martinez</td>
+      <td>Shift B</td>
+      <td class="mono">03:33 PM</td>
+      <td class="num">4.1</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>14ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-30"  style="">
+      <td class="mono">WO-18601</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1029</td>
+      <td>Fabricated Component</td>
+      <td>Customer B</td>
+      <td class="num">19</td>
+      <td>Press Brake 2</td>
+      <td>G. Martin</td>
+      <td>Shift B</td>
+      <td class="mono">03:58 PM</td>
+      <td class="num">3.6</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>1/4" Plate</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-31"  style="">
+      <td class="mono">WO-18609</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1026</td>
+      <td>Fabricated Component</td>
+      <td>Customer D</td>
+      <td class="num">6</td>
+      <td>Welding Station 2</td>
+      <td>T. Johnson</td>
+      <td>Shift A</td>
+      <td class="mono">06:18 AM</td>
+      <td class="num">4.7</td>
+      <td><span style="color:#b94040;font-weight:600;">High</span></td>
+      <td>14ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-32"  style="">
+      <td class="mono">WO-18608</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1020</td>
+      <td>Fabricated Component</td>
+      <td>Customer A</td>
+      <td class="num">15</td>
+      <td>Welding Station 2</td>
+      <td>M. Davis</td>
+      <td>Shift A</td>
+      <td class="mono">07:40 AM</td>
+      <td class="num">3.4</td>
+      <td><span style="color:#4a7c59;font-weight:600;">Low</span></td>
+      <td>Aluminum 5052</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-33"  style="">
+      <td class="mono">WO-18611</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1025</td>
+      <td>Fabricated Component</td>
+      <td>Customer C</td>
+      <td class="num">25</td>
+      <td>Welding Station 2</td>
+      <td>T. Johnson</td>
+      <td>Shift A</td>
+      <td class="mono">06:37 AM</td>
+      <td class="num">4.8</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>Stainless 304</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+    <tr class="wo-row " id="row-34"  style="">
+      <td class="mono">WO-18616</td>
+      <td><span class="status-badge status-open">Open</span></td>
+      <td class="mono">P-1009</td>
+      <td>Terminal Box Lid</td>
+      <td>Customer A</td>
+      <td class="num">5</td>
+      <td>Welding Station 1</td>
+      <td>N. Rodriguez</td>
+      <td>Shift A</td>
+      <td class="mono">06:55 AM</td>
+      <td class="num">4.9</td>
+      <td><span style="color:#888;font-weight:600;">Medium</span></td>
+      <td>12ga Steel</td>
+      <td><span class="risk-badge risk-low">&#9679; LOW</span> </td>
+    </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Status bar ── -->
+  <div class="status-bar">
+    <span>Showing <strong>35</strong> work orders</span>
+    <span class="sep">&middot;</span>
+    <span style="color:#b94040;font-weight:600;">&#9873; 6 High Risk</span>
+    <span class="sep">&middot;</span>
+    <span style="color:#c87941;font-weight:600;">&#9873; 4 Medium Risk</span>
+    <span class="sep">&middot;</span>
+    <span>Last updated: 01/01/2026 6:02 AM</span>
+    <span class="sep">&middot;</span>
+    <span style="color:#888;">Risk scores powered by BRIM Defect Risk Scorer</span>
+  </div>
+
+</div>
+
+<script>
+  function togglePanel(i) {
+    const panel = document.getElementById('panel-' + i);
+    const row   = document.getElementById('row-' + i);
+    const icon  = row.querySelector('.expand-icon');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+      panel.style.display = 'table-row';
+      if (icon) icon.innerHTML = '&#9650;';
+    } else {
+      panel.style.display = 'none';
+      if (icon) icon.innerHTML = '&#9660;';
+    }
+  }
+
+  // Make toolbar buttons interactive (visual feedback only)
+  document.querySelectorAll('.tb-btn:not(.disabled)').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (this.textContent.includes('Refresh')) {
+        this.textContent = '&#8635; Refreshing...';
+        setTimeout(() => { this.innerHTML = '&#8635; Refresh'; }, 800);
+      }
+    });
+  });
+
+  // Filter by risk dropdown (functional)
+  document.querySelectorAll('.filter-select').forEach(sel => {
+    sel.addEventListener('change', function() {
+      const val = this.value;
+      if (this.previousElementSibling && this.previousElementSibling.textContent === 'Risk:') {
+        document.querySelectorAll('.wo-row').forEach(row => {
+          const badge = row.querySelector('.risk-badge');
+          if (!badge) return;
+          const tier = badge.textContent.trim();
+          if (val === 'All') {
+            row.style.display = '';
+          } else if (val === 'High' && !tier.includes('HIGH')) {
+            row.style.display = 'none';
+          } else if (val === 'Medium' && !tier.includes('MED')) {
+            row.style.display = 'none';
+          } else {
+            row.style.display = '';
+          }
+        });
+      }
+    });
+  });
+
+  // Search filter (functional)
+  document.querySelector('.filter-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.wo-row').forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(q) ? '' : 'none';
+    });
+  });
+</script>
+</body>
+</html>

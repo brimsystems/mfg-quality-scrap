@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/429afe06663b4c87a2a3fcd0cd649650/artifacts
+end_time: 1781643304045
+entry_point_name: ''
+experiment_id: '784656975370625389'
+lifecycle_stage: active
+run_id: 429afe06663b4c87a2a3fcd0cd649650
+run_name: random_forest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1781643280987
+status: 3
+tags: []
+user_id: codespace

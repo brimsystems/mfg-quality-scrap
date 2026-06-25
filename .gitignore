@@ -237,3 +237,6 @@ modules/*/dashboard/evidence/node_modules/
 
 # Metadata
 *.egg-info/
+
+# MLflow local sqlite tracking DB (binary, local-only, may contain logged secrets)
+ml/mlruns/mlflow.db

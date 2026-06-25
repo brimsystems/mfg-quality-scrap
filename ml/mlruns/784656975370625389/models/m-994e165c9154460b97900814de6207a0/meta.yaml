@@ -1,0 +1,10 @@
+artifact_location: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/models/m-994e165c9154460b97900814de6207a0/artifacts
+creation_timestamp: 1781643299656
+experiment_id: '784656975370625389'
+last_updated_timestamp: 1781643304041
+model_id: m-994e165c9154460b97900814de6207a0
+model_type: null
+name: random_forest_pipeline
+source_run_id: 429afe06663b4c87a2a3fcd0cd649650
+status: 2
+status_message: null

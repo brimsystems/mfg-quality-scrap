@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/mlops_mfg/ml/mlruns/784656975370625389/6c80853c1acc467aa6a773c335ef1dbf/artifacts
+end_time: 1781643330665
+entry_point_name: ''
+experiment_id: '784656975370625389'
+lifecycle_stage: active
+run_id: 6c80853c1acc467aa6a773c335ef1dbf
+run_name: training_20260616_2051
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1781643107926
+status: 3
+tags: []
+user_id: codespace
