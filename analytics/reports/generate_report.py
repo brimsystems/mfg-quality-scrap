@@ -658,7 +658,7 @@ html = f'''<!DOCTYPE html>
 <body>
 
 <div class="page-header">
-  <h1>Analytics Report: Quality &amp; Scrap Diagnostics (Metal Fabrication)</h1>
+  <h1>Analytics Diagnostic Report: Defect Risks &amp; Scrap Costs</h1>
 </div>
 
 <div class="layout">

@@ -664,7 +664,7 @@ html = f'''<!DOCTYPE html>
 <div class="page-header">
   <h1> ML Model Overview & Performance Report — Pre-Production Defect Risk Scorer</h1>
   <div class="sub">Scoring period: {PERIOD_NAME} &nbsp;·&nbsp;
-       Model version {mv.version} &nbsp;·&nbsp;</div>
+       Model version {mv.version} &nbsp;</div>
 </div>
 
 <div class="layout">

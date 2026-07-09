@@ -570,7 +570,7 @@ html = f'''<!DOCTYPE html>
 </head>
 <body>
   <div class="page-header">
-    <h1>Operating Dashboard: Defects &amp; Scrap Costs</h1>
+    <h1>Analytics Dashboard: Defect Risks &amp; Scrap Costs</h1>
   </div>
   <div class="container">
     {kpi_section}
