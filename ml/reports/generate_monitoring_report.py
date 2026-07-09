@@ -606,7 +606,7 @@ html = f'''<!DOCTYPE html>
 <div class="page-header">
   <h1> MLOps Monitoring Report — Pre-Production Defect Risk Scorer</h1>
   <div class="sub">Periods: {names[0]} – {names[-1]} &nbsp;·&nbsp;
-       Model v{model_ver} ({model_type}) &nbsp;·&nbsp;</div>
+       Model v{model_ver} ({model_type}) &nbsp;</div>
 </div>
 
 <div class="layout">

@@ -618,7 +618,7 @@ html = f'''<!DOCTYPE html>
 
 <div class="page-header">
   <h1> ML Model Technical Overview — Pre-Production Defect Risk Scorer</h1>
-  <div class="sub"> Model version {mv.version} ({model_type}) &nbsp;·&nbsp;</div>
+  <div class="sub"> Model version {mv.version} ({model_type}) &nbsp;</div>
 </div>
 
 <div class="layout">
