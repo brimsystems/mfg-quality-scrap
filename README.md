@@ -3,7 +3,6 @@
 **An end-to-end data platform for a simulated metal fabrication shop: from raw multi-system data to an analytical diagnostics report and KPI dashboard, and a production-monitored defect-risk machine learning (ML) model embedded inside the existing ERP system.**
 
 > Built by Brian Davis — fractional data engineering & analytics partner for SMB manufacturers.
-> 📺 **[Open the live work-order demo →](https://your-username.github.io/metalfab-data-platform/)**  ·  Representative data ([see note](#a-note-on-the-data)).
 
 ---
 
@@ -20,37 +19,37 @@ This project addresses that situation end-to-end: it integrates the three data s
 ### 1. ERP work-order queue with embedded defect risk flags — *primary deliverable*
 A simulated shop-floor work-order queue, with each job's defect-risk tier and top risk driver surfaced inline. By embedding the model within a JobBOSS-style ERP system, operators can see within systems they already use which jobs need a second look, and why, in plain operational language.
 
-> 📺 **[Open the live demo →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/)**
+> **[Open the live ERP work-order queue with embedded defect risk flags →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/)**
 
-### 2. Analytics diagnostic report — *understanding the drivers of defects and scrap costs*
+### 2. Analytical diagnostics report — *understanding the drivers of defects and scrap costs*
 
-An adhoc quality and scrap diagnostic: where defects and scrap costs concentrate by machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk of defects occuring. 
+An adhoc quality and scrap diagnostics: where defects and scrap costs concentrate by machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk of defects occuring. 
 
-Link to analytics diagnostic report: https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/analytics_report.html
+> **[Open the analytical diagnostics report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/report.html)**
 
 ### 3. Analytics dashboard — *monthly view of defect rate and scrap cost KPIs*
 
 Drivers of defect risks and scrap costs with historical trends. Represents the recurring operational view that managers would use to understand their business.
 
-Link to analytics dashboard:
+> **[Open the analytics dashboard →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/dashboard.html)**
 
 ### 4. ML model overview — *plain-language model summary*
 
 A concise model card for a non-technical stakeholder: what the ML model predicts, what it was trained on, how it performs at a glance, and where its limits are. Answers the question, "what does this model do and can I trust it?"
 
-Link to ML model overview: 
+> **[Open the ML model overview →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/model_overview.html)**
 
 ### 5. ML model technical report — *depth for the technical evaluator*
 
 The full technical detail: training data summary, model selection comparison, validation/test performance, calibration, confusion matrix, and SHAP-based feature importance. For the reader who wants to verify the rigor underneath the outputs above.
 
-Link to ML model technical report:
+> **[Open the ML model technical report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/ml_report.html)**
 
 ### 6. MLOps monitoring report — *how the model performs over time in production*
 
 A production-monitoring dashboard tracking the model across periods on four layers (performance, target drift, prediction drift, and feature drift), with an explicit, rules-based retraining decision. This report reflects MLOps best practices and answers "is this model producing reliable results over time that we can continue to rely on?"
 
-Link to MLOps monitoring report: 
+> **[Open the MLOps monitoring report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/monitoring_report.html)**
 
 ---
 
