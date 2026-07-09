@@ -560,7 +560,7 @@ html = f'''<!DOCTYPE html>
       background: #F5F6F8; margin: 0; padding: 0; color: #333;
     }}
     .page-header {{ background: {BRAND_BLUE}; color: white; padding: 20px 40px; }}
-    .page-header h1 {{ font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }}
+    .page-header h1 {{ margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }}
     .container {{
       max-width: 1600px; margin: 0 auto; padding: 28px 32px 64px 32px;
     }}
