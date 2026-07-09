@@ -1,6 +1,6 @@
 # Manufacturing Data Platform & Defect Risk Intelligence 
 
-**An end-to-end data platform for a simulated metal fabrication shop: from raw multi-system data to an analytical diagnostics report and KPI dashboard, and a production-monitored defect-risk machine learning (ML) model embedded inside the existing ERP system.**
+**An end-to-end, simulated data platform for a metal fabrication shop: from raw multi-system data to analytics (diagnostic report and KPI dashboard) and a machine learning (ML) model that flags pre-production defect risks, embedded inside the existing ERP system.**
 
 > Built by Brian Davis — fractional data engineering & analytics partner for SMB manufacturers.
 
