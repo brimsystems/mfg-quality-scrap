@@ -234,7 +234,7 @@ def compute_metrics(y_true, y_prob, threshold: float = 0.5, prefix: str = "") ->
 # ══════════════════════════════════════════════════════════════════════════════
 # ARTIFACT GENERATION
 # Produces files saved locally then logged to MLflow as artifacts.
-# Part 4 (generate_ml_report.py) retrieves these by artifact name.
+# Part 4 (generate_ml_overview.py) retrieves these by artifact name.
 # ══════════════════════════════════════════════════════════════════════════════
 
 def save_confusion_matrix(y_true, y_prob, threshold: float,

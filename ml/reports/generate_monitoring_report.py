@@ -1,26 +1,3 @@
-"""
-generate_monitoring_report.py
-Generates monitoring_report.html — model health monitoring dashboard for the
-C01 defect risk scorer.
-
-Intended audience: BRIM practitioner — internal model-health review across the
-Jan/Feb/Mar 2026 scoring periods.
-
-Section order follows the monitoring decision narrative:
-    1. Status & retraining decision   (the verdict first)
-    2. Performance                    (direct evidence — fast labels here)
-    3. Target drift                   (defect-rate shift vs baseline)
-    4. Prediction drift               (output distribution — early proxy)
-    5. Feature drift                  (input distributions — diagnostic context)
-    6. Data quality                   (substrate)
-    7. Monitoring log                 (provenance)
-
-Run from the ml/reports/ directory:
-    python3 generate_monitoring_report.py
-
-Output: monitoring_report.html
-"""
-
 from pathlib import Path
 import base64
 import io
@@ -576,7 +553,7 @@ html = f'''<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Model Monitoring Report — {names[0]}–{names[-1]}</title>
+  <title> MLOps Monitoring Report — {names[0]}–{names[-1]}</title>
   <style>
     *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -627,10 +604,9 @@ html = f'''<!DOCTYPE html>
 <body>
 
 <div class="page-header">
-  <h1>Model Monitoring Report — Defect Risk Scorer</h1>
+  <h1> MLOps Monitoring Report — Pre-Production Defect Risk Scorer</h1>
   <div class="sub">Periods: {names[0]} – {names[-1]} &nbsp;·&nbsp;
-       Model v{model_ver} ({model_type}) &nbsp;·&nbsp;
-       Generated {datetime.now().strftime("%B %d, %Y")}</div>
+       Model v{model_ver} ({model_type}) &nbsp;·&nbsp;</div>
 </div>
 
 <div class="layout">

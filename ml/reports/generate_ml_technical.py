@@ -1,19 +1,3 @@
-"""
-generate_model_overview.py
-Generates model_overview.html — technical model overview for the
-C01 pre-production defect risk scorer.
-
-Intended audience: technical reviewers, data-savvy client contacts,
-PE operating partners. Covers model card, training data, model selection,
-performance metrics, learning curve, calibration, precision-recall curve,
-confusion matrix, and SHAP feature importance.
-
-Run from the ml/reports/ directory:
-    python3 generate_model_overview.py
-
-Output: model_overview.html
-"""
-
 from pathlib import Path
 import sys
 import base64
@@ -38,7 +22,7 @@ from sklearn.metrics import (
 # ── Paths ──────────────────────────────────────────────────────────────────
 ML_DIR      = Path("..").resolve()
 FEATURES_DIR= ML_DIR / "data" / "features"
-OUTPUT      = Path("model_overview.html")
+OUTPUT      = Path("ml_technical.html")
 MLFLOW_TRACKING = f"sqlite:///{ML_DIR}/mlruns/mlflow.db"
 
 # ── Palette — matches generate_report.py exactly ──────────────────────────
@@ -633,10 +617,8 @@ html = f'''<!DOCTYPE html>
 <body>
 
 <div class="page-header">
-  <h1>Technical Model Overview — Pre-Production Defect Risk Scorer</h1>
-  <div class="sub">C01 Quality &amp; Scrap &nbsp;·&nbsp;
-       Model version {mv.version} ({model_type}) &nbsp;·&nbsp;
-       Generated {datetime.now().strftime("%B %d, %Y")}</div>
+  <h1> ML Model Technical Overview — Pre-Production Defect Risk Scorer</h1>
+  <div class="sub"> Model version {mv.version} ({model_type}) &nbsp;·&nbsp;</div>
 </div>
 
 <div class="layout">

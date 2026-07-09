@@ -10,7 +10,7 @@
 
 A sheet-metal fabricator (~$30M revenue, two shifts, four machine groups) was losing margin to elevated defect rates, but couldn't see *why*. The company was already capturing the data needed to understand the drivers of defects. However, the data was stored across disconnected systems: machine health and production data was stored in the MES; supplier, operator, and schedule data was stored in the ERP; and inspection outcomes were stored in the QMS. These data silos meant that the combinations of operating conditions that actually drive defects, for example, an aging machine running a high-complexity job on a thin-gauge lot late in the schedule, went unseen until defects already occured.
 
-This project addresses that situation end-to-end: it integrates the three data systems, diagnoses where the cost actually concentrates, builds a machine learning model that scores each work order's defect risk before it runs, delivers that score within the existing work-order system so that operators can see it live, then monitors that model's effectiveness over time while in production.
+This project addresses that situation end-to-end: it integrates the three data systems, diagnoses where the cost actually concentrates, builds a machine learning model that scores each work order's defect risk before it runs, delivers that score within the existing work-order system so that operators can see it live, then monitors that model's effectiveness over time using MLOps best practices.
 
 ---
 
@@ -21,11 +21,11 @@ A simulated shop-floor work-order queue, with each job's defect-risk tier and to
 
 > **[Open the live ERP work-order queue with embedded defect risk flags →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/)**
 
-### 2. Analytical diagnostics report — *understanding the drivers of defects and scrap costs*
+### 2. Analytics diagnostic report — *understanding the drivers of defects and scrap costs*
 
-An adhoc quality and scrap diagnostics: where defects and scrap costs concentrate by machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk of defects occuring. 
+An adhoc quality and scrap diagnostic: where defects and scrap costs concentrate by machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk of defects occuring. 
 
-> **[Open the analytical diagnostics report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/report.html)**
+> **[Open the analytics diagnostic report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/report.html)**
 
 ### 3. Analytics dashboard — *monthly view of defect rate and scrap cost KPIs*
 
@@ -37,13 +37,13 @@ Drivers of defect risks and scrap costs with historical trends. Represents the r
 
 A concise model card for a non-technical stakeholder: what the ML model predicts, what it was trained on, how it performs at a glance, and where its limits are. Answers the question, "what does this model do and can I trust it?"
 
-> **[Open the ML model overview →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/model_overview.html)**
+> **[Open the ML model overview →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/ml_overview.html)**
 
 ### 5. ML model technical report — *depth for the technical evaluator*
 
 The full technical detail: training data summary, model selection comparison, validation/test performance, calibration, confusion matrix, and SHAP-based feature importance. For the reader who wants to verify the rigor underneath the outputs above.
 
-> **[Open the ML model technical report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/ml_report.html)**
+> **[Open the ML model technical report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/ml_technical.html)**
 
 ### 6. MLOps monitoring report — *how the model performs over time in production*
 
@@ -56,13 +56,11 @@ A production-monitoring dashboard tracking the model across periods on four laye
 ## How it works
 
 ```
-Data source systems  →  dbt integration  →  analytical marts  →  diagnosis  →  ML  →  scoring  →  monitoring
-   (MES, ERP,               (staging +          (defect rates,      (reports)    (XGBoost   (batch,    (Evidently,
-    materials,             marts, tests)       scrap cost)                      + SHAP)    monthly)   MLflow)
-    QMS)
+Data source systems  →  dbt integration & pipeline  →  data marts  →  analytics (diagnosis, dashboard & ML) → MLOps monitoring
+
 ```
 
-This project works end-to-end, moving left to right in the sequence above. Raw extracts from three data source systems with the integration problems that come with them, including mismatched IDs, inconsistent naming, and varying granularity, are combined using a tested dbt pipeline into analytical marts. Those marts feed the analytics report and dashboard as well as the machine learning pipeline. The data is split into training, validation and test sets, and the machine learning model is then built. Ongoing model scoring is set up using MLOps best practices and runs as a monthly batch, with each period monitored against training and validation references.
+This project works end-to-end, moving left to right in the sequence above. Raw extracts from three data source systems with the integration problems that come with them, including mismatched IDs, inconsistent naming, and varying granularity, are combined using a tested dbt pipeline into data marts. Those marts feed the analytics report and dashboard as well as the machine learning pipeline. The data is split into training, validation and test sets, and the machine learning model is then built. Ongoing model scoring is set up using MLOps best practices and runs as a monthly batch, with each period monitored against training and validation references.
 
 ---
 
@@ -103,7 +101,7 @@ metalfab-data-platform/
 | MLOps | MLflow (tracking & registry), Evidently (drift), Prefect (orchestration) |
 | Delivery | Static HTML/JS (ERP simulation), GitHub Pages |
 
-Stack is shown as personal expertise; real engagements are tool-agnostic and meet the client where their systems already are.
+Stack reflects personal expertise and project constraints; real engagements are tool-agnostic and meet the client where their systems already are.
 
 ---
 
@@ -113,9 +111,10 @@ Stack is shown as personal expertise; real engagements are tool-agnostic and mee
 <summary>Setup and run order</summary>
 
 ```bash
-# 1. Environment (Poetry)
-poetry install
-poetry shell
+# 1. Environment 
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .          # installs the project + dependencies declared in pyproject.toml
 
 # 2. Generate data and build the warehouse
 python3 -m data_source.generate.run_generator     # adjust to your generator entry point
@@ -141,13 +140,13 @@ cd ml/reports && python3 generate_erp_dashboard.py && python3 generate_monitorin
 
 ## A note on the data
 
-This project runs on a representative dataset modeled on a metal fabrication shop. It was generated to reflect the real integration challenges and operational patterns of the sector, without using any client's data. That's deliberate: it demonstrates the full diagnosis-to-execution workflow end to end, on data I can share publicly. The model results reflect this apparatus and engineering, *and are not a claim about any specific shop*.
+This project runs on a representative dataset modeled on a metal fabrication shop. It was generated to reflect the real integration challenges and operational patterns of the sector, without using any client's data. That's deliberate: it demonstrates the full diagnosis-to-execution workflow end to end, on data I can share publicly. The analytics and ML model results are therefore illustrative, *and do not reflect any specific shop*.
 
 ---
 
 ## About
 
-Brian Davis is a fractional data engineering and analytics partner for small and mid-sized  manufacturers. Through embedded partnership rather than transactional consulting, he implements data-driven operational improvements that create immediate and lasting business value. 
+Brian Davis is a fractional data engineering and analytics partner for small and mid-sized  manufacturers. Through embedded partnership rather than transactional consulting, I implement data-driven operational improvements that create immediate and lasting business value. 
 
-**[Your Name]** — [LinkedIn] · [email] 
+**[Brian Davis]** — brian@brimsystems.com 
 

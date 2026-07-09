@@ -1,17 +1,3 @@
-"""
-generate_erp_dashboard.py
-Generates erp_dashboard.html — simulated ERP work order queue
-with embedded pre-production defect risk scores.
-
-Shows April 13, 2026 active work orders as they would appear in a
-live manufacturing ERP with the defect risk scorer integrated.
-
-Run from the ml/reports/ directory:
-    python3 generate_erp_dashboard.py
-
-Output: erp_dashboard.html
-"""
-
 from pathlib import Path
 import json
 import duckdb
@@ -366,7 +352,7 @@ html = f"""<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MetroFab Industries — Work Orders</title>
+  <title>Work Orders</title>
   <style>
     *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
 
@@ -685,8 +671,7 @@ html = f"""<!DOCTYPE html>
 <div class="app-header">
   <div class="app-header-top">
     <div class="app-logo">
-      MetroFab Industries
-      <span>Enterprise Resource Planning</span>
+      Enterprise Resource Planning
     </div>
     <div class="app-user">
       <span>&#128100; J. Martinez (Production Supervisor)</span>

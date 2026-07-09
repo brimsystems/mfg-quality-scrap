@@ -1,14 +1,3 @@
-"""
-generate_ml_report.py
-Generates ml_report.html — monthly model performance report.
-Pulls from MLflow artifacts and ml/data/scoring/ outputs.
-
-Run from the ml/reports/ directory:
-    python3 generate_ml_report.py
-
-Output: ml_report.html
-"""
-
 from pathlib import Path
 import sys
 import base64
@@ -30,7 +19,7 @@ from mlflow import MlflowClient
 # ── Paths ──────────────────────────────────────────────────────────────────
 ML_DIR       = Path("..").resolve()
 SCORING_DIR  = ML_DIR / "data" / "scoring"
-OUTPUT       = Path("ml_report.html")
+OUTPUT       = Path("ml_overview.html")
 PERIOD_LABEL = "202601"
 PERIOD_NAME  = "January – March 2026"
 
@@ -673,10 +662,9 @@ html = f'''<!DOCTYPE html>
 <body>
 
 <div class="page-header">
-  <h1>Model Performance Report — Pre-Production Defect Risk Scorer</h1>
+  <h1> ML Model Overview & Performance Report — Pre-Production Defect Risk Scorer</h1>
   <div class="sub">Scoring period: {PERIOD_NAME} &nbsp;·&nbsp;
-       Model version {mv.version} &nbsp;·&nbsp;
-       Generated {datetime.now().strftime("%B %d, %Y")}</div>
+       Model version {mv.version} &nbsp;·&nbsp;</div>
 </div>
 
 <div class="layout">

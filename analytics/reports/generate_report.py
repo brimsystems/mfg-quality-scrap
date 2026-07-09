@@ -1,11 +1,3 @@
-"""
-generate_report.py
-Generates report.html from mart model data in defects_scrap.duckdb.
-Run from the analytics/reports/ directory:
-    python3 generate_report.py
-Output: report.html
-"""
-
 from pathlib import Path
 import duckdb
 import pandas as pd
@@ -558,7 +550,7 @@ html = f'''<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analytics Report: Quality &amp; Scrap Diagnostics (Metal Fabrication)</title>
+  <title>Analytics Diagnostic Report: Defect Risks &amp; Scrap Costs</title>
   <style>
     *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
@@ -696,7 +688,7 @@ html = f'''<!DOCTYPE html>
     {wrap("scrap_trend",  "Total Scrap Cost by Month")}
 
     <p>We built a data pipeline to extract, standardize, and merge records across all
-    four systems into a single source, then conducted comprehensive analytical diagnostics to
+    three systems (ERP, MES, QMS) into a single source, then conducted comprehensive analytical diagnostics to
     surface previously unseen patterns.</p>
 
     <p>As a result of this analysis, three distinct patterns emerged that point to specific,
