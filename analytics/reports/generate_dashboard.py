@@ -33,6 +33,7 @@ PRIOR_WEEK_START   = PRIOR_WEEK_END - pd.DateOffset(weeks=1)
 T12_CHART_START    = CURRENT_MONTH - pd.DateOffset(months=11)
 
 BRAND_BLUE   = "#3D5166"
+DARK_GREY    = "#333333"
 GOOD_GREEN   = "#1A7A3A"
 BAD_RED      = "#CC0000"
 NEUTRAL_GREY = "#AAAAAA"
@@ -162,7 +163,7 @@ def kpi_row(label, qi_cards, sc_cards):
 
 # ── KPI section header — full-width blue box ───────────────────────────────
 kpi_header = f'''
-<div style="background:{BRAND_BLUE};color:white;border-radius:8px;padding:12px 20px;
+<div style="background:{DARK_GREY};color:white;border-radius:8px;padding:12px 20px;
             font-size:20px;font-weight:700;margin-bottom:12px;text-align:center;">
   KPIs
 </div>'''
@@ -530,8 +531,8 @@ def chart_card(key, title):
 
 chart_grid = f'''
 <div style="margin-top:36px;">
-  <div style="background:{BRAND_BLUE};color:white;border-radius:8px;padding:12px 20px;
-              font-size:20px;font-weight:700;margin-bottom:16px;">
+  <div style="background:{DARK_GREY};color:white;border-radius:8px;padding:12px 20px;
+              font-size:20px;font-weight:700;margin-bottom:16px;text-align:center;">
     Trend Charts (Trailing 12 Months)
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
