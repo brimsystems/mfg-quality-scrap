@@ -33,7 +33,7 @@ PRIOR_WEEK_START   = PRIOR_WEEK_END - pd.DateOffset(weeks=1)
 T12_CHART_START    = CURRENT_MONTH - pd.DateOffset(months=11)
 
 BRAND_BLUE   = "#3D5166"
-DARK_GREY    = "#333333"
+DARK_GREY    = "#555555"
 GOOD_GREEN   = "#1A7A3A"
 BAD_RED      = "#CC0000"
 NEUTRAL_GREY = "#AAAAAA"
@@ -560,7 +560,7 @@ html = f'''<!DOCTYPE html>
       background: #F5F6F8; margin: 0; padding: 0; color: #333;
     }}
     .page-header {{
-      background: {BRAND_BLUE}; color: white; padding: 20px 40px;
+      background: {BRAND_BLUE}; color: white; padding: 35px 40px;
       display: flex; align-items: baseline; gap: 16px;
     }}
     .page-header h1 {{ margin: 0; font-size: 22px; font-weight: 700; }}
