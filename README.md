@@ -1,36 +1,36 @@
-# Manufacturing Quality & Cost Intelligence — Metal Fabrication
+# Manufacturing Data Platform & Defect Risk Intelligence 
 
-**An end-to-end data platform for a discrete manufacturer: from raw multi-system data to a production-monitored defect-risk machine learning (ML) model embedded inside the existing ERP system.**
+**An end-to-end data platform for a simulated metal fabrication shop: from raw multi-system data to an analytical diagnostics report and KPI dashboard, and a production-monitored defect-risk machine learning (ML) model embedded inside the existing ERP system.**
 
 > Built by Brian Davis — fractional data engineering & analytics partner for SMB manufacturers.
 > 📺 **[Open the live work-order demo →](https://your-username.github.io/metalfab-data-platform/)**  ·  Representative data ([see note](#a-note-on-the-data)).
 
 ---
 
-## Business context
+## Situation Overview
 
-A sheet-metal fabricator (~$30M revenue, two shifts, four machine groups) was losing margin to elevated defect rates, but couldn't see *why*. The company was already capturing the data needed to understand the drivers of defects. However, the data was stored across disconnected systems: machine health and production data in the MES, supplier, operator, and schedule data in the ERP, and inspection outcomes in the QMS. These data silos meant that the combinations of operating conditions that actually drive defects, for example, an aging machine running a high-complexity job on a thin-gauge lot late in the schedule, went unseen until defects already occured.
+A sheet-metal fabricator (~$30M revenue, two shifts, four machine groups) was losing margin to elevated defect rates, but couldn't see *why*. The company was already capturing the data needed to understand the drivers of defects. However, the data was stored across disconnected systems: machine health and production data was stored in the MES; supplier, operator, and schedule data was stored in the ERP; and inspection outcomes were stored in the QMS. These data silos meant that the combinations of operating conditions that actually drive defects, for example, an aging machine running a high-complexity job on a thin-gauge lot late in the schedule, went unseen until defects already occured.
 
-This project takes that situation end to end: integrate the three data systems, diagnose where the cost actually concentrates, build a machine learning model that scores each work order's defect risk before it runs, deliver that score within the existing work-order system so that operators can see it live, then monitor that model's effectiveness over time while in production.
+This project addresses that situation end-to-end: it integrates the three data systems, diagnoses where the cost actually concentrates, builds a machine learning model that scores each work order's defect risk before it runs, delivers that score within the existing work-order system so that operators can see it live, then monitors that model's effectiveness over time while in production.
 
 ---
 
 ## Deliverables
 
 ### 1. ERP work-order queue with embedded defect risk flags — *primary deliverable*
-A simulated shop-floor work-order queue, with each job's defect-risk tier and top risk driver surfaced inline. By embedding the model within a JobBOSS- or E2 Shop-style ERP system, operators can see within systems they already use which jobs need a second look, and why, in plain operational language.
+A simulated shop-floor work-order queue, with each job's defect-risk tier and top risk driver surfaced inline. By embedding the model within a JobBOSS-style ERP system, operators can see within systems they already use which jobs need a second look, and why, in plain operational language.
 
-> 📺 **[Open the live demo →](https://github.com/brimsystems/metalfab-data-platform/tree/main/ml/reports/erp_dashboard.html)**
+> 📺 **[Open the live demo →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/)**
 
 ### 2. Analytics diagnostic report — *understanding the drivers of defects and scrap costs*
 
-An adhoc quality-and-scrap diagnostic: where defects and scrap costs concentrate by machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk. 
+An adhoc quality and scrap diagnostic: where defects and scrap costs concentrate by machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk of defects occuring. 
 
-Link to analytics diagnostic report: https://github.com/brimsystems/metalfab-data-platform/tree/main/docs/reports/report.html
+Link to analytics diagnostic report: https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/analytics_report.html
 
 ### 3. Analytics dashboard — *monthly view of defect rate and scrap cost KPIs*
 
-Defect-risk and scrap-cost drivers with monthly trends. Represents the recurring operational view that managers would use to understand their business.
+Drivers of defect risks and scrap costs with historical trends. Represents the recurring operational view that managers would use to understand their business.
 
 Link to analytics dashboard:
 
@@ -42,13 +42,13 @@ Link to ML model overview:
 
 ### 5. ML model technical report — *depth for the technical evaluator*
 
-The full technical detail: training-data summary, model-selection comparison, validation/test performance, calibration, confusion matrix, and SHAP-based feature importance. For the reader who wants to verify the rigor underneath the outputs above.
+The full technical detail: training data summary, model selection comparison, validation/test performance, calibration, confusion matrix, and SHAP-based feature importance. For the reader who wants to verify the rigor underneath the outputs above.
 
 Link to ML model technical report:
 
 ### 6. MLOps monitoring report — *how the model performs over time in production*
 
-A production-monitoring dashboard tracking the model across periods on four layers (performance, target drift, prediction drift, and feature drift), with an explicit, rules-based retraining decision. This report reflects MLOps best practices and answers "is this model producing reliable results over time that we can rely on?"
+A production-monitoring dashboard tracking the model across periods on four layers (performance, target drift, prediction drift, and feature drift), with an explicit, rules-based retraining decision. This report reflects MLOps best practices and answers "is this model producing reliable results over time that we can continue to rely on?"
 
 Link to MLOps monitoring report: 
 
