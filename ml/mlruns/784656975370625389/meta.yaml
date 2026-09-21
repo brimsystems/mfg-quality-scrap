@@ -1,8 +1,0 @@
-artifact_location: /workspaces/mlops_mfg/ml/mlruns/784656975370625389
-creation_time: 1779376372427
-experiment_id: '784656975370625389'
-last_update_time: 1779376372427
-lifecycle_stage: active
-name: c01_defect_risk_scorer
-trace_location: null
-workspace: default
