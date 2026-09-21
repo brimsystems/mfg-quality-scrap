@@ -1,8 +1,16 @@
-# Manufacturing Data Platform & Defect Risk Intelligence
+# Manufacturing Data Platform: Defects & Scrap Costs
 
-**An end-to-end data platform for a metal fabrication shop: it integrates machine, ERP, and quality data, diagnoses where defects and scrap cost concentrate, and runs a machine learning model that scores each work order's defect risk before it runs, delivered inside the shop's existing work-order system and monitored over time.**
+**An end-to-end data platform for a mid-sized manufacturer, spanning data engineering, analytics and machine learning, applied to defects and scrap cost.**
 
-> Built by Brian Davis, fractional data engineering and analytics partner for SMB manufacturers.
+It starts with a **data pipeline** that integrates machine, order and quality data from three disconnected systems into a single modeled dataset.
+
+An **analytics and ML layer** is then built on top of that integrated dataset, including:
+
+1. **Analytics diagnostics report** that uncovers the sources of elevated defect risks and scrap costs
+2. **KPI dashboard** that tracks key outcomes related to defects and scrap costs, laid out by week and month
+3. **Machine learning model** that predicts defect risks and flags them before a job runs, supported by technical documentation and MLOps monitoring in production
+
+The machine learning model's defect risk predictions are embedded into the company's existing ERP system, as shown below:
 
 [![ERP work-order queue with embedded defect risk flags](docs/screenshots/erp_queue.png)](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html)
 
@@ -10,11 +18,13 @@
 
 ---
 
-## The problem
+## Business Context
 
-A sheet-metal fabricator (~$30M revenue, two shifts, four machine groups) was losing margin to elevated defect rates but couldn't see why. The data that explained it was already being captured, just split across three disconnected systems: machine and production data in the MES, supplier, operator, and schedule data in the ERP, and inspection outcomes in the QMS. The combinations that actually drive defects, for example an aging machine running a high-complexity job on a thin-gauge lot late in the schedule, only surface when those systems are joined, so they went unseen until the scrap was already made.
+A sheet-metal fabricator (~$30M revenue) was losing margin to elevated defect rates. To date, the company's approach to managing defects and scrap data consisted of reviewing scrap tallies after the fact, a manual process that assigned cost but never explained cause.
 
-This project integrates the three systems, diagnoses where the cost concentrates, builds a model that scores each work order's defect risk before it runs, delivers that score inside the existing work-order queue, and monitors the model over time.
+The data that explained these elevated defect rates was already being captured, just split across three disconnected systems: machine and production data in the MES, supplier, operator, and schedule data in the ERP, and inspection outcomes in the QMS.
+
+Integrating these disparate systems revealed the operating conditions that drive defects, for example an aging machine running a high-complexity job on a thin-gauge lot late in the schedule. Going forward, defect risk is known before a job runs, and the conditions behind it are visible while there is still time to change the setup, the material or the schedule.
 
 ---
 
