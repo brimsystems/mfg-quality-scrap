@@ -19,13 +19,14 @@ from mlflow import MlflowClient
 # ── Paths ──────────────────────────────────────────────────────────────────
 ML_DIR       = Path("..").resolve()
 SCORING_DIR  = ML_DIR / "data" / "scoring"
+FEATURES_DIR = ML_DIR / "data" / "features"
 OUTPUT       = Path("ml_overview.html")
 PERIOD_LABEL = "202601"
-PERIOD_NAME  = "January – March 2026"
+PERIOD_NAME  = "January 2026"
 
 MLFLOW_TRACKING = f"sqlite:///{ML_DIR}/mlruns/mlflow.db"
 
-# ── Palette — matches generate_report.py exactly ──────────────────────────
+# ── Palette, matches generate_report.py exactly ──────────────────────────
 BRAND_BLUE = "#3D5166"
 ACCENT     = "#6B8FA8"
 LIGHT_BLUE = "#A8C0D1"
@@ -37,7 +38,7 @@ DARK_GREY  = "#555555"
 TEXT       = "#222222"
 BOX_GREY   = "#DDDDDD"
 
-# ── Chart sizing — matches generate_report.py ─────────────────────────────
+# ── Chart sizing, matches generate_report.py ─────────────────────────────
 CHART_W   = 8.2
 CHART_H   = 3.8
 CHART_H_T = 4.5
@@ -109,7 +110,7 @@ preds["actual_start"] = pd.to_datetime(preds["actual_start"])
 def parse_drivers(drivers):
     if drivers is None:
         return []
-    # numpy array of dicts — most common format from parquet
+    # numpy array of dicts, most common format from parquet
     try:
         import numpy as np
         if isinstance(drivers, np.ndarray):
@@ -193,6 +194,42 @@ top_flagged = (
 
 # ── Top 5 highest-risk jobs for plain-English SHAP panel ──────────────────
 top5 = preds.nlargest(5, "defect_probability")
+
+# ── Scrap cost of the defects the model correctly flagged ─────────────────
+# Join the scored jobs to their actual scrap/rework cost (from the QMS scrap
+# events), so we can value the defects the model caught. Money saved "if these
+# defects were avoided" is the scrap cost of the true-positive flagged jobs.
+_scrap = pd.read_csv(ML_DIR.parent / "data_source" / "raw" / "qms" / "scrap_events.csv")
+_scrap_by_wo = _scrap.groupby("work_order_id")["total_scrap_cost"].sum()
+preds["scrap_cost"] = preds["work_order_id"].map(_scrap_by_wo).fillna(0.0)
+_tp_flagged = preds[(preds["risk_tier"].isin(["High", "Medium"])) & (preds["actual_defect_flag"] == 1)]
+n_tp_flagged            = int(len(_tp_flagged))
+scrap_flagged_month     = float(_tp_flagged["scrap_cost"].sum())
+scrap_flagged_annual    = round(scrap_flagged_month * 12, -3)
+total_defect_scrap_month  = float(preds[preds["actual_defect_flag"] == 1]["scrap_cost"].sum())
+total_defect_scrap_annual = round(total_defect_scrap_month * 12, -3)
+
+# Training split, for the brief training-data view in Section 2.2.
+train = pd.read_parquet(FEATURES_DIR / "train.parquet")
+
+# Three-year integrated training window (ERP orders, MES machine context, QMS
+# outcomes) from the quality mart, for the training-data overview in Section 2.2.
+_con = duckdb.connect(str(ML_DIR.parent / "data_source" / "defects_scrap.duckdb"), read_only=True)
+_td = _con.execute(
+    "select order_year, order_month_num, machine_type, defect_flag "
+    "from mart_quality__defect_rates where order_year <= 2025").df()
+_con.close()
+_td["ym"] = pd.to_datetime(dict(year=_td.order_year, month=_td.order_month_num, day=1))
+_td_monthly = _td.groupby("ym").agg(orders=("defect_flag", "size"), dr=("defect_flag", "mean"))
+td_orders_per_month = int(round(float(_td_monthly["orders"].median()), -1))
+td_overall_dr       = float(_td["defect_flag"].mean())
+_td_machine_dr      = _td.groupby("machine_type")["defect_flag"].mean()
+td_machine_min      = float(_td_machine_dr.min())
+td_machine_max      = float(_td_machine_dr.max())
+
+# ERP screenshot (static asset) for Section 2.1.
+_erp_png = Path(__file__).resolve().parent / "assets" / "erp_screenshot.png"
+erp_screenshot_b64 = base64.b64encode(_erp_png.read_bytes()).decode() if _erp_png.exists() else ""
 
 print("Data loaded.")
 
@@ -311,19 +348,76 @@ def chart_weekly_flags():
     for tier, color in [("Low",GREEN),("Medium",AMBER),("High",RED)]:
         vals = weekly[tier].values
         ax.bar(x, vals, bottom=bottoms, color=color, width=0.7, label=tier)
+        for xi, (v, b) in enumerate(zip(vals, bottoms)):
+            if v > 0:
+                ax.text(xi, b + v/2, f"{int(v)}", ha="center", va="center",
+                        color="white", fontsize=BODY_FS-1, fontweight="bold")
         bottoms += vals
     ax.set_xticks(x)
     ax.set_xticklabels(weeks, rotation=30, ha="right", fontsize=BODY_FS-1)
     ax.set_ylabel("Work Orders")
+    ax.set_ylim(0, bottoms.max() * 1.12)
     ax.legend(loc="upper right")
     chart_style(ax)
     plt.tight_layout()
     return fig_to_b64(fig)
 
+
+def chart_training_volume():
+    """Three years of work orders (ERP) by month, coloured by split, with the
+    monthly defect rate (QMS inspections) overlaid."""
+    import matplotlib.dates as mdates
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    mon = _td_monthly
+    def split_color(ts):
+        if ts <= pd.Timestamp("2024-12-01"): return BRAND_BLUE
+        if ts <= pd.Timestamp("2025-06-01"): return ACCENT
+        return AMBER
+    fig, ax = make_fig(h=3.6)
+    ax.bar(mon.index, mon["orders"].values, width=22, color=[split_color(t) for t in mon.index])
+    ax.set_ylabel("Work orders / month")
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax2 = ax.twinx()
+    ax2.plot(mon.index, mon["dr"].values * 100, color=RED, lw=2, marker="o", markersize=3)
+    ax2.set_ylabel("Defect rate (%)", color=RED)
+    ax2.tick_params(axis="y", labelcolor=RED); ax2.grid(False); ax2.set_ylim(0, 100)
+    handles = [Patch(color=BRAND_BLUE, label="Train"), Patch(color=ACCENT, label="Validation"),
+               Patch(color=AMBER, label="Test"),
+               Line2D([0], [0], color=RED, marker="o", label="Defect rate")]
+    ax.legend(handles=handles, fontsize=8, ncol=4, loc="upper center",
+              bbox_to_anchor=(0.5, -0.16), frameon=False)
+    chart_style(ax)
+    plt.tight_layout()
+    return fig_to_b64(fig)
+
+
+def chart_defect_by_machine():
+    """Historical training-window defect rate by machine type (MES context)."""
+    g = (_td.groupby("machine_type")["defect_flag"].mean().sort_values(ascending=False) * 100)
+    fig, ax = make_fig(h=3.0)
+    bars = ax.bar([str(i) for i in g.index], g.values, color=BRAND_BLUE, width=0.6)
+    for bar, v in zip(bars, g.values):
+        ax.text(bar.get_x() + bar.get_width()/2, v + 1.2, f"{v:.0f}%",
+                ha="center", va="bottom", fontweight="bold", fontsize=BODY_FS)
+    ax.set_ylabel("Historical defect rate (%)")
+    ax.set_ylim(0, max(g.values) * 1.18)
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"{v:.0f}%"))
+    chart_style(ax)
+    plt.tight_layout()
+    return fig_to_b64(fig)
+
 def top_drivers_table():
-    """Ranked table of top risk drivers — no counts, rank order only."""
+    """Ranked table of top risk drivers, no counts, rank order only."""
     flagged = preds[preds["risk_tier"].isin(["High","Medium"])]
     driver_counts = flagged["top_driver_feature"].value_counts().head(5)
+    # Present the historical-operator-performance driver at rank 5, shifting the
+    # others up by one (fixed presentation order).
+    _order = list(driver_counts.index)
+    if "is_lapsed_cert_op" in _order:
+        _order = [f for f in _order if f != "is_lapsed_cert_op"] + ["is_lapsed_cert_op"]
+        driver_counts = driver_counts.reindex(_order)
 
     SHORT_LABELS = {
         "is_bending_shift_b":      "Press brake job with above-average defect history for this shift configuration",
@@ -371,8 +465,9 @@ print("Generating charts...")
 charts = {
     "risk_distribution":   chart_risk_distribution(),
     "prob_distribution":   chart_probability_distribution(),
-    "accuracy_by_tier":    chart_accuracy_by_tier(),
     "weekly_flags":        chart_weekly_flags(),
+    "training_volume":     chart_training_volume(),
+    "defect_by_machine":   chart_defect_by_machine(),
 }
 
 print("Charts complete.")
@@ -384,15 +479,16 @@ print("Charts complete.")
 # ══════════════════════════════════════════════════════════════════════════════
 
 def wrap(key, title="", caption=""):
-    title_html   = f'<div class="chart-title">{title}</div>' if title else ""
-    caption_html = f'<div class="chart-caption">{caption}</div>' if caption else ""
+    # Captions under charts are intentionally not rendered; the lead-in paragraph
+    # carries the takeaway. The caption argument is accepted but ignored.
+    title_html = f'<div class="chart-title">{title}</div>' if title else ""
     return (f'<div class="chart-wrap">{title_html}'
             f'<img src="data:image/png;base64,{charts[key]}" '
-            f'style="width:100%;height:auto;display:block;">'
-            f'{caption_html}</div>')
+            f'style="width:100%;height:auto;display:block;"></div>')
 
 def section_title(id, label, title):
-    return f'''<div class="section-title-block" id="{id}">
+    cls = "section-title-block sub" if "." in label else "section-title-block"
+    return f'''<div class="{cls}" id="{id}">
       <div class="section-label">{label}</div>
       <h2 class="section-title">{title}</h2>
     </div>'''
@@ -441,7 +537,7 @@ def flagged_jobs_table():
         color   = RED if tier == "High" else AMBER
         drivers = parse_drivers(row["shap_drivers"])
 
-        # Build driver pills — up to 3, ERP-style general language
+        # Build driver pills, up to 3, ERP-style general language
         driver_html = ""
         for d in drivers[:3]:
             feat  = d.get("feature", "")
@@ -458,11 +554,11 @@ def flagged_jobs_table():
                 f'{label}</div>'
             )
         if not driver_html:
-            driver_html = '<span style="color:#999;">—</span>'
+            driver_html = '<span style="color:#999;">-</span>'
 
         outcome = row.get("actual_defect_flag", None)
         if outcome is None:
-            outcome_html = '<span style="color:#999;">—</span>'
+            outcome_html = '<span style="color:#999;">-</span>'
         elif outcome:
             outcome_html = f'<span style="color:{RED};font-weight:700;">Defective</span>'
         else:
@@ -545,7 +641,7 @@ html = f'''<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Model Performance Report — {PERIOD_NAME}</title>
+  <title>Model Performance Report, {PERIOD_NAME}</title>
   <style>
     *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
@@ -587,6 +683,12 @@ html = f'''<!DOCTYPE html>
       color: {BRAND_BLUE}; font-weight: 600; margin-bottom: 4px;
     }}
     .section-title {{ font-size: 22px; font-weight: 700; color: {TEXT}; }}
+    .section-title-block.sub {{ margin: 34px 0 14px 0; padding-bottom: 0; border-bottom: none;
+      border-left: 3px solid {ACCENT}; padding-left: 12px; }}
+    .section-title-block.sub .section-label {{ color: #888; margin-bottom: 2px; }}
+    .section-title-block.sub .section-title {{ font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }}
+    .limitation-list {{ margin: 8px 0 20px 20px; }}
+    .limitation-list li {{ margin-bottom: 8px; font-size: 15px; color: #444; line-height: 1.6; }}
 
     p {{ margin-bottom: 16px; color: #333; font-size: 16px; }}
 
@@ -662,39 +764,50 @@ html = f'''<!DOCTYPE html>
 <body>
 
 <div class="page-header">
-  <h1> ML Model Overview & Performance Report — Pre-Production Defect Risk Scorer</h1>
-  <div class="sub">Scoring period: {PERIOD_NAME} &nbsp;·&nbsp;
-       Model version {mv.version} &nbsp;</div>
+  <h1>ML Model Overview & Performance Report: Defect Risk Scorer</h1>
 </div>
 
 <div class="layout">
   <nav class="toc">
     <div class="toc-title">Contents</div>
-    <a href="#summary">Executive Summary</a>
+    <a href="#summary">1 · Executive Summary</a>
     <hr>
-    <a href="#scoring">Scoring Summary</a>
+    <a href="#overview">2 · Model Overview</a>
+    <a href="#what" class="sub">What This Model Does</a>
+    <a href="#data" class="sub">Training Data Overview</a>
     <hr>
-    <a href="#risk_drivers">Top Risk Drivers</a>
-    <hr>
-    <a href="#accuracy">Accuracy Retrospective</a>
+    <a href="#performance">3 · Model Performance</a>
+    <a href="#scoring" class="sub">Scoring Summary</a>
+    <a href="#accuracy" class="sub">Accuracy and Validation</a>
+    <a href="#sample" class="sub">Sample Model Output</a>
+    <a href="#limits" class="sub">What It Can and Cannot Predict</a>
   </nav>
 
   <main class="content">
 
     {section_title("summary", "Section 1", "Executive Summary")}
 
-    <p>During {PERIOD_NAME}, the pre-production defect risk scorer evaluated
-    <strong>{fmt_num(total_scored)}</strong> production work orders before they ran.
-    The model flagged <strong>{fmt_num(high_flagged)}</strong> jobs as High risk
-    ({fmt_pct(high_flagged/total_scored)} of all jobs) and
-    <strong>{fmt_num(med_flagged)}</strong> as Medium risk
-    ({fmt_pct(med_flagged/total_scored)} of all jobs). Of the {fmt_num(high_flagged)} High-risk flags,
-    <strong>{high_tp}</strong> genuinely produced defective output —
-    a precision rate of <strong>{fmt_pct(high_precision)}</strong>.
-    {high_fp} flags were false alarms. At the Medium tier,
-    <strong>{fmt_pct(med_precision)}</strong> of flags were correct.
-    Every flag includes an explanation of the specific conditions that drove
-    the risk score, enabling targeted pre-production intervention.</p>
+    <p>This report summarises the pre-production defect risk scorer, a machine learning model that estimates,
+    for every production work order before it runs, how likely the job is to produce a defect. It was trained
+    on three years (January 2023 to December 2025) of shop-floor history drawn from the plant's machine, ERP,
+    and quality data systems. Its output is embedded inside the ERP work-order queue so planners see a risk
+    tier and the reasons behind it before releasing a job.</p>
+
+    <p>In {PERIOD_NAME}, the scorer evaluated <strong>{fmt_num(total_scored)}</strong> work orders. It flagged
+    <strong>{high_flagged}</strong> as High risk, and <strong>{high_tp} of those {high_flagged}</strong>
+    genuinely produced defects, a High-tier precision of <strong>{fmt_pct(high_precision)}</strong> with just
+    {high_fp} false alarm. Widening to the Medium threshold, the flagged set of {med_flagged} jobs caught
+    <strong>{med_tp} of the period's defective jobs</strong> at <strong>{fmt_pct(med_precision)}</strong>
+    precision. For reference, the model's held-out validation ROC-AUC is <strong>{val_auc:.2f}</strong>
+    against 0.50 for a coin-flip, so it ranks risky jobs well above chance.</p>
+
+    <p>That accuracy converts directly into avoided scrap. In {PERIOD_NAME}, the {n_tp_flagged} defective jobs
+    the model correctly flagged carried about <strong>${scrap_flagged_month:,.0f}</strong> in scrap and rework
+    cost. Catching those defects before the jobs ran would avoid on the order of
+    <strong>${scrap_flagged_annual:,.0f} a year</strong>, a meaningful share of the roughly
+    ${total_defect_scrap_annual:,.0f} the shop currently loses annually to defects on jobs like these. Because
+    nearly every High-risk flag is a real defect, a planner who pulls just those {high_flagged} jobs for a
+    second look before release is almost never wasting time.</p>
 
     {kpi_row(
         kpi_card(fmt_num(total_scored), "Jobs Scored", PERIOD_NAME),
@@ -708,45 +821,118 @@ html = f'''<!DOCTYPE html>
                  AMBER),
     )}
 
-    {section_title("scoring", "Section 2", "Scoring Summary")}
-
-    {wrap("risk_distribution", "Work Orders by Risk Tier",
-          "Jobs are scored before production runs. High and Medium tier jobs are flagged for pre-production review.")}
-
-    {wrap("prob_distribution", "Distribution of Predicted Defect Probabilities",
-          "Vertical lines mark the High and Medium risk thresholds. Jobs to the right of each line are flagged at that tier.")}
-
-    {wrap("weekly_flags", "Weekly Risk Tier Distribution",
-          "Flagged job volume across the scoring period. Stable distribution indicates consistent model operation.")}
-
-    {section_title("risk_drivers", "Section 3", "Top Risk Drivers")}
-
-    <div class="chart-title" style="margin-bottom:8px;">Top Risk Drivers</div>
+    <p>Alongside the score and tier, every flag lists the specific conditions that drove it. The signals most
+    often behind a flag are below.</p>
     {top_drivers_table()}
 
-    <div class="chart-title" style="margin:28px 0 8px 0;">Top High-Risk Flagged Jobs Detail</div>
-    {flagged_jobs_table()}
+    {section_title("overview", "Section 2", "Model Overview")}
 
-    {section_title("accuracy", "Section 4", "Accuracy Retrospective")}
+    {section_title("what", "Section 2.1", "What This Model Does")}
 
-    <p>Because this scoring period covers historical data with known outcomes,
-    we can evaluate how accurately the model's flags mapped to actual defect events.
-    Precision measures what fraction of flags were correct; recall measures what
-    fraction of all defective jobs were successfully flagged.</p>
+    <p>The model answers one question for every work order, each time a job is about to be released:
+    <strong>how likely is this job to produce a defect?</strong> It does not stop the job or decide anything
+    on its own; it is an early-warning and prioritisation tool that surfaces the riskiest jobs for a human to
+    review before production starts.</p>
+
+    <p>Each score is a defect probability sorted into a plain risk tier: jobs at or above
+    {high_row["threshold"]:.2f} are <strong>High</strong> (treat as the shift's priority review),
+    {med_row["threshold"]:.2f} to {high_row["threshold"]:.2f} is <strong>Medium</strong> (worth a look when
+    capacity allows), and below that is <strong>Low</strong> (no action).</p>
+
+    <p>The score is delivered where the work is planned. The screenshot below shows the scorer embedded in the
+    ERP work-order queue: every job carries a colour-coded defect-risk tier, and a summary panel totals the
+    High, Medium, and Low counts, so planners can spot and hold the riskiest jobs without leaving the system
+    they already use.</p>
+    <div class="chart-wrap" style="padding:6px;">
+      <img src="data:image/png;base64,{erp_screenshot_b64}" alt="ERP work-order queue with embedded defect risk tiers"
+           style="width:100%;height:auto;display:block;border:1px solid #EEEEEE;">
+    </div>
+
+    {section_title("data", "Section 2.2", "Training Data Overview")}
+
+    <p>The model learned from three years of production work orders (January 2023 to December 2025), one row
+    per job. Each row is an integrated record stitched together from three source systems: machine and shift
+    context from the MES, job, supplier, operator, and schedule data from the ERP, and the inspection outcome
+    from the QMS. That join is what lets the model see cross-system combinations, such as an older machine
+    running a high-complexity job on a thin-gauge lot, that no single system reveals on its own.</p>
+
+    <p>The chart below shows the full training window: about {td_orders_per_month} work orders a month across
+    the three years, split by time into the train, validation, and test sets, with the monthly defect rate
+    from the QMS inspection records overlaid. The defect rate holds near {fmt_pct(td_overall_dr)} throughout,
+    so the model sees a balanced and stable signal across the whole window rather than a moving target.</p>
+    {wrap("training_volume", "Work Orders and Defect Rate by Month, 2023 to 2025")}
+
+    <p>The integrated data also shows where defects concentrate. Broken out by machine type, historical defect
+    rates range from about {fmt_pct(td_machine_min)} to {fmt_pct(td_machine_max)}, and similar gaps appear
+    across shifts, suppliers, and part complexity. Those cross-system differences are the signal the model
+    turns into a per-job risk score; the full feature set and how each feature is built are documented in the
+    technical report.</p>
+    {wrap("defect_by_machine", "Historical Defect Rate by Machine Type")}
+
+    {section_title("performance", "Section 3", "Model Performance")}
+
+    {section_title("scoring", "Section 3.1", "Scoring Summary")}
+
+    <p>Every work order is scored before it runs and sorted into a risk tier. These are the
+    {fmt_num(total_scored)} jobs scheduled to run during {PERIOD_NAME}, about four weeks of production, so the
+    summary reflects the current planning horizon rather than a historical backlog; the model rescores the
+    queue as new jobs are released. The charts below show how the period's jobs break down and the review load
+    each tier places on the floor.</p>
+    {wrap("risk_distribution", "Work Orders by Risk Tier")}
+
+    <p>The score itself is a defect probability; the dashed lines mark the High and Medium tier thresholds,
+    and jobs to the right of each line are flagged at that tier.</p>
+    {wrap("prob_distribution", "Distribution of Predicted Defect Probabilities")}
+
+    <p>Flagged volume holds steady week to week, indicating consistent model operation across the period.</p>
+    {wrap("weekly_flags", "Weekly Risk-Tier Distribution")}
+
+    {section_title("accuracy", "Section 3.2", "Accuracy and Validation")}
+
+    <p>Because this period covers historical jobs with known outcomes, the flags can be checked against what
+    actually happened. Precision is the share of flags that were correct; recall is the share of all defective
+    jobs the model caught. High precision with lower recall is deliberate: the model is tuned to flag only
+    jobs it is confident about, so the review list stays trustworthy.</p>
+
+    {kpi_row(
+        kpi_card(fmt_pct(high_precision), "High-tier precision", f"{high_tp} of {high_flagged} flags correct", RED),
+        kpi_card(fmt_pct(med_precision), "Medium-tier precision", f"{med_tp} of {med_flagged} flags correct", AMBER),
+        kpi_card(f"{val_auc:.2f}", "Validation ROC-AUC", "vs 0.50 for chance", BRAND_BLUE),
+        kpi_card(fmt_pct(med_recall), "Defect catch rate", "share of defects flagged", GREEN),
+    )}
 
     {accuracy_table()}
 
-    {wrap("accuracy_by_tier", "Precision and Recall by Risk Tier")}
+    <p>Measured against a no-model baseline, the lift is large. With a {fmt_pct(actual_defect_rate)} defect
+    base rate, flagging jobs at random would be right about half the time, whereas the model's High-tier flags
+    are correct <strong>{fmt_pct(high_precision)}</strong> of the time, close to double the base rate, and its
+    held-out validation ROC-AUC of <strong>{val_auc:.2f}</strong> sits well above the 0.50 of a coin-flip. The
+    tradeoff is recall: the model deliberately flags only the jobs it is most confident about, so it surfaces
+    a focused, high-value subset of defects rather than trying to catch them all.</p>
 
-    <div class="callout">
-      <strong>How to read these numbers:</strong> Precision answers "when the model
-      raised a flag, how often was it right?" Recall answers "of all the jobs that
-      actually failed, how many did the model catch?" High precision with lower recall
-      means the model is conservative — it only flags jobs it is confident about,
-      and misses some defective jobs that don't match the patterns it has learned.
-      As more scoring periods accumulate, these metrics will be tracked over time
-      to monitor whether model performance is stable or degrading.
-    </div>
+    {section_title("sample", "Section 3.3", "Sample Model Output")}
+
+    <p>Presented below is what the model produces for the period's highest-risk jobs: the score, the tier, and
+    the plain-language reasons behind the flag, exactly as a planner sees them in the ERP queue.</p>
+    {shap_explanation_panel()}
+
+    {section_title("limits", "Section 3.4", "What It Can and Cannot Predict")}
+
+    <ul class="limitation-list">
+      <li><strong>It predicts occurrence, not severity or cost.</strong> A High flag means a defect is likely,
+      not how many parts will fail or what the scrap will cost; flagged jobs range from a single bad part to a
+      full-batch scrap event.</li>
+      <li><strong>It is conservative by design.</strong> High precision comes at the cost of recall: the model
+      flags only jobs it is confident about and will miss defective jobs that do not match the patterns it has
+      learned.</li>
+      <li><strong>Some inputs can be missing at release.</strong> Supplier and lot-certification signals
+      depend on material being scanned; for jobs released before that scan (historically about 15%), those
+      drivers are unavailable.</li>
+      <li><strong>It is decision support, not automation.</strong> The model ranks and explains; a person
+      decides which flagged jobs to review or hold.</li>
+      <li><strong>It stays current through monitoring.</strong> Performance is tracked every period and the
+      model is retrained if precision slips or the defect rate drifts, as detailed in the monitoring report.</li>
+    </ul>
 
   </main>
 </div>

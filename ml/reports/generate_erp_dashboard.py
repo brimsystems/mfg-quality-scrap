@@ -60,7 +60,7 @@ if len(wo) == 0:
     """).df()
     con.close()
     SCORE_DATE = str(pd.to_datetime(wo["actual_start"].iloc[0]).date())
-    print(f"  No data for April 13 — using {SCORE_DATE} ({len(wo)} orders)")
+    print(f"  No data for April 13, using {SCORE_DATE} ({len(wo)} orders)")
 
 wo["actual_start"] = pd.to_datetime(wo["actual_start"])
 
@@ -75,7 +75,7 @@ if pred_path.exists():
     print(f"  Merged {preds['work_order_id'].isin(wo['work_order_id']).sum()} risk scores")
 else:
     # Generate placeholder scores from features if no predictions file
-    print("  No predictions file — generating placeholder scores")
+    print("  No predictions file, generating placeholder scores")
     np.random.seed(42)
     wo["defect_probability"] = np.random.beta(2, 5, len(wo))
     wo["risk_tier"] = pd.cut(
@@ -130,7 +130,7 @@ def get_desc(part_num):
 
 # ── Risk factor translation ────────────────────────────────────────────────
 # Converts model signals into plain operational language
-# Deliberately general — no specific operator or supplier names
+# Deliberately general, no specific operator or supplier names
 
 def get_risk_factors(row):
     """
@@ -153,7 +153,7 @@ def get_risk_factors(row):
     material   = str(row.get("material_type", ""))
     supplier   = str(row.get("supplier", ""))
 
-    # Build factors based on conditions — general language only
+    # Build factors based on conditions, general language only
     if "bending" in top_driver or (machine_t == "Bending" and shift == "Shift B"):
         factors.append("Bending setup conditions associated with higher-than-average rework rate")
 
@@ -175,7 +175,7 @@ def get_risk_factors(row):
     # Fill remaining slots with secondary signals
     if len(factors) < 2:
         if machine_t == "Bending" and complexity == "High":
-            factors.append("High complexity bend — tight angle tolerance required")
+            factors.append("High complexity bend, tight angle tolerance required")
         if shift == "Shift B" and age and age > 6:
             factors.append("Equipment age increases setup sensitivity on second shift")
         if "Steel" in material and "ga" in material and int(material.split("ga")[0].split(" ")[-1]) <= 16:
@@ -281,7 +281,7 @@ for i, row in wo.iterrows():
       <td class="num">{int(row['quantity_ordered']):,}</td>
       <td>{row['machine_name']}</td>
       <td>{row['op_name']}</td>
-      <td>{row.get('shift_code','—')}</td>
+      <td>{row.get('shift_code','-')}</td>
       <td class="mono">{row['actual_start'].strftime('%I:%M %p')}</td>
       <td class="num">{row['std_labor_hrs']:.1f}</td>
       <td>{complexity_cell(row['complexity'])}</td>
@@ -291,7 +291,7 @@ for i, row in wo.iterrows():
 
     if expandable:
         factors, action = get_risk_factors(row)
-        prob_pct = f"{row['defect_probability']:.0%}" if pd.notna(row.get('defect_probability')) else "—"
+        prob_pct = f"{row['defect_probability']:.0%}" if pd.notna(row.get('defect_probability')) else "-"
 
         factor_items = ""
         for j, f in enumerate(factors):
@@ -327,9 +327,9 @@ for i, row in wo.iterrows():
               <div class="detail-grid">
                 <span class="detail-label">Machine:</span><span>{row['machine_name']} ({row['machine_id']})</span>
                 <span class="detail-label">Operator:</span><span>{row['op_name']}</span>
-                <span class="detail-label">Shift:</span><span>{row.get('shift_code','—')}</span>
+                <span class="detail-label">Shift:</span><span>{row.get('shift_code','-')}</span>
                 <span class="detail-label">Material:</span><span>{row['material_type']}</span>
-                <span class="detail-label">Lot Status:</span><span>{row.get('lot_cert_status','—')}</span>
+                <span class="detail-label">Lot Status:</span><span>{row.get('lot_cert_status','-')}</span>
                 <span class="detail-label">Complexity:</span><span>{row['complexity']}</span>
               </div>
             </div>
@@ -704,7 +704,7 @@ html = f"""<!DOCTYPE html>
 
   <div class="page-title-bar">
     <div>
-      <div class="page-title">Work Order Queue — Active</div>
+      <div class="page-title">Work Order Queue, Active</div>
       <div class="page-subtitle">All open and in-progress work orders &middot; {DATE_DISPLAY}</div>
     </div>
     <div class="risk-summary">

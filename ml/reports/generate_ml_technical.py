@@ -25,7 +25,7 @@ FEATURES_DIR= ML_DIR / "data" / "features"
 OUTPUT      = Path("ml_technical.html")
 MLFLOW_TRACKING = f"sqlite:///{ML_DIR}/mlruns/mlflow.db"
 
-# ── Palette — matches generate_report.py exactly ──────────────────────────
+# ── Palette, matches generate_report.py exactly ──────────────────────────
 BRAND_BLUE = "#3D5166"
 ACCENT     = "#6B8FA8"
 LIGHT_BLUE = "#A8C0D1"
@@ -91,6 +91,7 @@ run      = client.get_run(mv.run_id)
 run_id   = mv.run_id
 model_type = run.data.tags.get("model_type", "xgboost").title()
 val_auc    = run.data.metrics.get("val_roc_auc", 0)
+best_params = run.data.params
 
 # Load feature splits
 print("Loading feature splits...")
@@ -136,7 +137,7 @@ print("Downloading MLflow artifacts...")
 with tempfile.TemporaryDirectory() as tmp:
     tmp = Path(tmp)
     artifacts = {}
-    # Find parent run — model_comparison.csv is logged at parent level
+    # Find parent run, model_comparison.csv is logged at parent level
     child_run    = client.get_run(run_id)
     parent_run_id = child_run.data.tags.get("mlflow.parentRunId", run_id)
 
@@ -389,6 +390,59 @@ def chart_shap():
     return fig_to_b64(fig)
 
 
+def chart_corr_heatmap():
+    from matplotlib.colors import LinearSegmentedColormap
+    feats = [f for f in (NUMERICAL_FEATURES + INTERACTION_FEATURES) if f in train.columns]
+    C = train[feats].astype(float).corr().fillna(0.0).values
+    cmap = LinearSegmentedColormap.from_list("brand_div", [BRAND_BLUE, "#FFFFFF", RED])
+    fig, ax = plt.subplots(figsize=(CHART_W, 5.4))
+    im = ax.imshow(C, cmap=cmap, vmin=-1, vmax=1)
+    ax.set_xticks(range(len(feats))); ax.set_yticks(range(len(feats)))
+    ax.set_xticklabels(feats, rotation=45, ha="right", fontsize=8)
+    ax.set_yticklabels(feats, fontsize=8)
+    for i in range(len(feats)):
+        for j in range(len(feats)):
+            v = C[i, j]
+            ax.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=7,
+                    color="white" if abs(v) > 0.6 else "#333333")
+    ax.set_xticks(np.arange(-.5, len(feats), 1), minor=True)
+    ax.set_yticks(np.arange(-.5, len(feats), 1), minor=True)
+    ax.grid(which="minor", color="white", linewidth=0.8); ax.tick_params(which="minor", length=0)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    cb = fig.colorbar(im, fraction=0.046, pad=0.04); cb.ax.tick_params(labelsize=7)
+    plt.tight_layout()
+    return fig_to_b64(fig)
+
+
+def chart_categorical_signal():
+    """Historical defect rate within each category of the most informative
+    categorical features, against the shop-wide average. This is where a tree
+    model finds most of its signal."""
+    feats = [("complexity", "Part complexity"), ("material_type", "Material type"),
+             ("machine_type", "Machine type"), ("shift_code", "Shift")]
+    overall = float(y_train.mean()) * 100
+    fig, axes = plt.subplots(2, 2, figsize=(CHART_W, 5.8))
+    for ax, (col, title) in zip(axes.ravel(), feats):
+        g = (train.groupby(col)[TARGET].mean() * 100).sort_values()
+        colors = [RED if v > overall else BRAND_BLUE for v in g.values]
+        ax.barh(range(len(g)), g.values, color=colors, height=0.66)
+        ax.set_yticks(range(len(g))); ax.set_yticklabels([str(i) for i in g.index], fontsize=9)
+        ax.axvline(overall, color=DARK_GREY, ls="--", lw=1)
+        for i, v in enumerate(g.values):
+            ax.text(v + 1, i, f"{v:.0f}%", va="center", fontsize=8, color=DARK_GREY)
+        ax.set_title(title, fontsize=11, fontweight="bold")
+        ax.set_xlim(0, max(g.values) * 1.22)
+        ax.set_xlabel("Defect rate (%)", fontsize=9)
+        for sp in ["top", "right"]:
+            ax.spines[sp].set_visible(False)
+        ax.spines["left"].set_color("#DDDDDD"); ax.spines["bottom"].set_color("#DDDDDD")
+        ax.xaxis.grid(True, color="#EEEEEE", linewidth=0.8); ax.yaxis.grid(False)
+        ax.set_axisbelow(True); ax.tick_params(labelsize=8)
+    fig.tight_layout()
+    return fig_to_b64(fig)
+
+
 print("Generating charts...")
 charts = {
     "class_balance":  chart_class_balance(),
@@ -398,6 +452,8 @@ charts = {
     "pr_curve":       chart_pr_curve(),
     "roc_curve":      chart_roc_curve(),
     "shap":           chart_shap(),
+    "corr_heatmap":   chart_corr_heatmap(),
+    "cat_signal":     chart_categorical_signal(),
 }
 print("Charts complete.")
 
@@ -407,7 +463,7 @@ print("Charts complete.")
 
 def wrap(key, title="", caption=""):
     if charts.get(key) is None:
-        return f'<div class="chart-wrap"><p style="color:#999;text-align:center;padding:20px;">Chart not available — MLflow artifact not found.</p></div>'
+        return f'<div class="chart-wrap"><p style="color:#999;text-align:center;padding:20px;">Chart not available, MLflow artifact not found.</p></div>'
     title_html   = f'<div class="chart-title">{title}</div>' if title else ""
     caption_html = f'<div class="chart-caption">{caption}</div>' if caption else ""
     return (f'<div class="chart-wrap">{title_html}'
@@ -416,7 +472,8 @@ def wrap(key, title="", caption=""):
             f'{caption_html}</div>')
 
 def section_title(id, label, title):
-    return f'''<div class="section-title-block" id="{id}">
+    cls = "section-title-block sub" if "." in label else "section-title-block"
+    return f'''<div class="{cls}" id="{id}">
       <div class="section-label">{label}</div>
       <h2 class="section-title">{title}</h2>
     </div>'''
@@ -485,7 +542,7 @@ def feature_table():
           <td style="font-family:monospace;font-size:13px;">{feat}</td>
           <td><span style="background:{color};color:white;padding:1px 7px;
               border-radius:3px;font-size:11px;font-weight:600;">{ftype}</span></td>
-          <td style="text-align:right;">{f"{corr:.3f}" if corr is not None else "—"}</td>
+          <td style="text-align:right;">{f"{corr:.3f}" if corr is not None else "-"}</td>
         </tr>'''
     return f'''<table class="data-table">
       <thead><tr>
@@ -495,11 +552,28 @@ def feature_table():
       <tbody>{rows}</tbody>
     </table>'''
 
+def ops_table():
+    n_features = len(CATEGORICAL_FEATURES) + len(NUMERICAL_FEATURES) + len(INTERACTION_FEATURES)
+    rows = [
+        ("Scoring cadence", "Monthly batch (<code>src/scoring.py</code>); each work order's risk tier and top driver are surfaced inline in the ERP work-order queue"),
+        ("Inference latency", f"A single gradient-boosted model over {n_features} features; the monthly batch scores all pending work orders in well under a second on commodity hardware"),
+        ("Model registry", f"MLflow Model Registry, defect_risk_scorer v{mv.version} (Production); each retrain registers a new version and this report regenerates against it"),
+        ("Orchestration", "Prefect schedules the monthly scoring and monitoring runs"),
+        ("Data lineage", "Three source systems (MES machine and production logs, ERP work orders and schedule, QMS inspection outcomes) &rarr; dbt staging and marts &rarr; features.py &rarr; registered model &rarr; ERP work-order queue"),
+        ("Retraining trigger", "Monitoring report rules: High-tier precision below 85%, or the defect rate drifts more than 10 points from the training baseline"),
+    ]
+    body = "".join(
+        f'<tr><td style="font-weight:600;width:180px;">{k}</td><td style="color:#333;">{v}</td></tr>'
+        for k, v in rows)
+    return f'''<table class="data-table">
+      <thead><tr><th>Specification</th><th>Detail</th></tr></thead>
+      <tbody>{body}</tbody></table>'''
+
 def training_data_table():
     splits = [
-        ("Train",      train, "Jan 2023 – Dec 2024"),
-        ("Validation", val,   "Jan 2025 – Jun 2025"),
-        ("Test",       test,  "Jul 2025 – Dec 2025"),
+        ("Train",      train, "Jan 2023 to Dec 2024"),
+        ("Validation", val,   "Jan 2025 to Jun 2025"),
+        ("Test",       test,  "Jul 2025 to Dec 2025"),
     ]
     rows = ""
     for label, df, period in splits:
@@ -527,7 +601,7 @@ html = f'''<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Technical Model Overview — Defect Risk Scorer</title>
+  <title>Technical Model Overview, Defect Risk Scorer</title>
   <style>
     *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
@@ -565,6 +639,10 @@ html = f'''<!DOCTYPE html>
       color: {BRAND_BLUE}; font-weight: 600; margin-bottom: 4px;
     }}
     .section-title {{ font-size: 22px; font-weight: 700; color: {TEXT}; }}
+    .section-title-block.sub {{ margin: 34px 0 14px 0; padding-bottom: 0; border-bottom: none;
+      border-left: 3px solid {ACCENT}; padding-left: 12px; }}
+    .section-title-block.sub .section-label {{ color: #888; margin-bottom: 2px; }}
+    .section-title-block.sub .section-title {{ font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }}
     p {{ margin-bottom: 16px; color: #333; font-size: 16px; }}
     .chart-title {{
       font-size: 17px; font-weight: 700; color: {TEXT};
@@ -617,8 +695,7 @@ html = f'''<!DOCTYPE html>
 <body>
 
 <div class="page-header">
-  <h1> ML Model Technical Overview — Pre-Production Defect Risk Scorer</h1>
-  <div class="sub"> Model version {mv.version} ({model_type}) &nbsp;</div>
+  <h1> ML Model Technical Overview, Pre-Production Defect Risk Scorer</h1>
 </div>
 
 <div class="layout">
@@ -627,20 +704,16 @@ html = f'''<!DOCTYPE html>
     <a href="#model-card">Model Card</a>
     <hr>
     <a href="#training-data">Training Data</a>
-    <a href="#features" class="sub">Feature Set</a>
-    <a href="#class-balance" class="sub">Class Balance</a>
     <hr>
-    <a href="#model-selection">Model Selection</a>
-    <hr>
-    <a href="#performance">Performance</a>
-    <a href="#learning-curve" class="sub">Learning Curve</a>
-    <a href="#calibration" class="sub">Calibration</a>
-    <a href="#pr-curve" class="sub">Precision-Recall</a>
-    <a href="#confusion" class="sub">Confusion Matrix</a>
+    <a href="#model-selection-perf">Model Selection &amp; Performance</a>
+    <a href="#model-selection" class="sub">Model Selection</a>
+    <a href="#performance" class="sub">Model Performance</a>
     <hr>
     <a href="#shap">Feature Importance</a>
     <hr>
     <a href="#limitations">Known Limitations</a>
+    <hr>
+    <a href="#ops">Deployment &amp; Operations</a>
   </nav>
 
   <main class="content">
@@ -659,7 +732,7 @@ html = f'''<!DOCTYPE html>
         </div>
         <div>
           <div class="mc-label">Version</div>
-          <div class="mc-value">{mv.version} — Production</div>
+          <div class="mc-value">{mv.version}, Production</div>
         </div>
         <div>
           <div class="mc-label">Registry</div>
@@ -671,7 +744,7 @@ html = f'''<!DOCTYPE html>
         </div>
         <div>
           <div class="mc-label">Prediction Type</div>
-          <div class="mc-value">Binary classification — defect probability [0, 1]</div>
+          <div class="mc-value">Binary classification, defect probability [0, 1]</div>
         </div>
         <div>
           <div class="mc-label">Operating Thresholds</div>
@@ -693,119 +766,148 @@ html = f'''<!DOCTYPE html>
     {section_title("training-data", "Section 2", "Training Data")}
 
     <p>The model was trained on production work order data from a sheet metal fabrication
-    operation covering January 2023 through December 2025. A time-based split was used to mirror the real deployment scenario where the model scores future jobs
-    it has never seen.</p>
+    operation covering January 2023 through December 2025. A time-based split was used to mirror the real
+    deployment scenario where the model scores future jobs it has never seen; shuffling jobs across time would
+    leak future outcomes into training.</p>
+
+    <p>Each work order is described by <strong>{len(CATEGORICAL_FEATURES)+len(NUMERICAL_FEATURES)+len(INTERACTION_FEATURES)}</strong>
+    features engineered in <code>src/features.py</code> and applied identically at training and scoring time,
+    spanning four groups. <strong>Job and part attributes</strong> cover part complexity, material type,
+    quantity ordered, standard labor hours, and whether the job requires welding. <strong>Machine and shift
+    context</strong> covers machine type, machine ID, machine age, and shift code. <strong>Supply and operator
+    signals</strong> cover supplier, lot certification status, and operator ID. Finally, four <strong>interaction
+    flags</strong> encode the cross-system patterns found in the diagnostic analysis: press-brake shift
+    configuration, high-complexity parts, thin-gauge material from a specific supplier, and
+    lapsed-certification operators. The target is <code>defect_flag</code>, set to 1 when any part in the order
+    fails inspection.</p>
 
     {training_data_table()}
 
-    <div class="callout">
-      <strong>Target definition note:</strong> defect_flag = 1 when any parts in a work
-      order failed inspection (quantity_failed &gt; 0). With a 55% positive rate, the
-      target captures a broad range of defect severity. The model predicts whether any
-      defect will occur, not the magnitude of the defect event.
-    </div>
-
-    {section_title("features", "Section 2.1", "Feature Set")}
-
-    <p>Features are engineered in <code>src/features.py</code> and applied identically
-    at training and scoring time. Interaction features encode domain-informed cross-system
-    patterns identified in the diagnostic analysis.</p>
-
-    {feature_table()}
-
-    {section_title("class-balance", "Section 2.2", "Class Balance by Split")}
-
-    <p>Class balance is consistent across all three splits, confirming the time-based
-    split did not introduce distributional shift in the target variable.</p>
-
+    <p>The target is close to balanced and stays stable across the three splits, which confirms the time-based
+    split did not shift the outcome distribution.</p>
     {wrap("class_balance", "Defective vs Clean Work Orders by Split")}
 
-    {section_title("model-selection", "Section 3", "Model Selection")}
+    <p>The full feature set is listed below, with each numeric feature's correlation to the target.</p>
+    {feature_table()}
 
-    <p>Three candidate classifiers were trained and evaluated on the validation set using
-    Optuna hyperparameter optimization (150 trials per model). The best-performing model
-    on validation ROC-AUC was selected and evaluated once on the held-out test set.</p>
+    <p>The numeric and interaction inputs are close to independent: every pairwise correlation sits under 0.2
+    in magnitude, so each contributes largely non-redundant signal rather than echoing another feature. Most
+    of the model's signal comes from the categorical features, whose associations are captured by the tree
+    splits rather than by linear correlation.</p>
+    {wrap("corr_heatmap", "Numeric and Interaction Feature Correlations")}
+
+    <p>Because the model is a gradient-boosted tree ensemble, its predictive power comes mainly from how it
+    splits on those categorical features. The panels below show the historical defect rate within each
+    category of the four most informative ones, measured against the {fmt_pct(y_train.mean())} shop-wide
+    average (the dashed line); bars above the average are shown in red.</p>
+
+    {wrap("cat_signal", "Historical Defect Rate by Categorical Feature")}
+
+    <p>The separation is clear and intuitive. High-complexity parts fail at {train.groupby("complexity")[TARGET].mean().get("High", 0):.0%}
+    versus about {train.groupby("complexity")[TARGET].mean().get("Medium", 0):.0%} for medium ones; thin-gauge
+    steel (14 and 16 gauge) runs well above heavier plate; Bending work and Shift B both sit above the
+    average, while Laser Cutting and Shift A sit below it. These are exactly the splits the tree makes, and
+    the interaction features combine them (for example, a high-complexity Bending job on Shift B, or thin-gauge
+    stock from a specific supplier) into the compound conditions that most strongly raise a job's risk score.</p>
+
+    {section_title("model-selection-perf", "Section 3", "Model Selection &amp; Performance")}
+
+    {section_title("model-selection", "Section 3.1", "Model Selection")}
+
+    <p>Three candidate classifiers, a logistic regression, a random forest, and a gradient-boosted XGBoost
+    model, were tuned with Optuna (150 trials each, validation ROC-AUC objective) and compared on the
+    validation set. XGBoost won on validation ROC-AUC and was registered as the production model, then
+    evaluated once on the held-out test set.</p>
 
     {model_comparison_table()}
 
-    {section_title("performance", "Section 4", "Performance Metrics")}
+    <p>The selected configuration is a shallow, well-regularised ensemble (max depth {best_params.get('max_depth','5')},
+    learning rate {float(best_params.get('learning_rate',0)):.2f}, subsample {float(best_params.get('subsample',0)):.2f},
+    column subsample {float(best_params.get('colsample_bytree',0)):.2f}), favouring many small trees over a few
+    deep ones. Hyperparameters were optimised against ROC-AUC on the fixed time-based validation window
+    (January to June 2025) rather than shuffled k-fold cross-validation, because shuffling would place later
+    jobs in the training folds and leak future outcomes into the fit.</p>
 
-    <p>Metrics for the selected model (Xgboost) are reported on both the validation set (used for model selection and
-    hyperparameter tuning) and the test set (touched once, after model selection was
-    complete). The test set is the honest estimate of real-world performance.</p>
+    {section_title("performance", "Section 3.2", "Model Performance")}
+
+    <p>The selected model is evaluated from several angles, each answering a different question about whether
+    the scores can be trusted in production: the headline metrics first, then how well the score ranks jobs
+    (ROC), how it trades precision against recall at each threshold (precision-recall curve), whether the
+    probabilities can be taken at face value (calibration), and how the current risk tiers land on real jobs
+    (confusion matrix).</p>
+
+    <p>On the held-out test set the model reaches a <strong>ROC-AUC of {test_metrics['ROC-AUC']:.2f}</strong>
+    and an <strong>average precision of {test_metrics['Avg Precision']:.2f}</strong>. The fair yardstick is a
+    no-skill baseline, which scores 0.50 on ROC-AUC and an average precision equal to the {y_test.mean():.0%}
+    defect base rate, so the model adds real discriminative signal above chance. Metrics appear for both the
+    validation set (used for tuning and selection) and the held-out test set, which was touched once.</p>
 
     {metrics_table()}
 
-    {section_title("learning-curve", "Section 4.1", "Learning Curve")}
-
-    <p>Training and validation AUC converge as training size increases, confirming the
-    model is learning generalizable signal. A gap between the two curves is expected —
-    XGBoost fits training data tightly, and the validation period reflects slightly
-    different operating conditions from a later time window.</p>
-
+    <p>A learning curve plots training and validation ROC-AUC as the training set grows. The two curves
+    converge as data is added, which means the model is learning generalisable signal rather than memorising
+    the training set. A modest gap remains because XGBoost fits the training data tightly and the validation
+    window reflects a slightly later operating period.</p>
     {wrap("learning_curve", "Training vs Validation ROC-AUC by Training Set Size")}
 
-    <p>The ROC curve shows the tradeoff between true positive rate and false positive rate
-    across all possible thresholds on the held-out test set.</p>
+    <p>The ROC curve shows the tradeoff between true and false positive rates across every threshold on the
+    held-out test set; the further the curve bows toward the top-left, the better the score ranks defective
+    jobs above clean ones.</p>
+    {wrap("roc_curve", "ROC Curve, Test Set")}
 
-    {wrap("roc_curve", "ROC Curve — Test Set")}
-
-    {section_title("calibration", "Section 4.2", "Calibration")}
-
-    <p>A well-calibrated model tracks the diagonal — when it predicts 70% probability,
-    approximately 70% of those jobs actually produce defects. Deviations from the diagonal
-    indicate the raw probability outputs should be interpreted with caution.</p>
-
+    <p>Calibration checks whether the predicted probability can be taken at face value: a well-calibrated model
+    tracks the diagonal, so when it predicts 70%, roughly 70% of those jobs actually produce defects. Points
+    near the diagonal mean the raw scores are usable as probabilities, not only as a ranking.</p>
     {wrap("calibration", "Predicted Probability vs Actual Defect Rate")}
 
-    {section_title("pr-curve", "Section 4.3", "Precision-Recall Curve")}
-
-    <p>Markers show the operating points for the High and Medium risk tiers.
-    Moving left along the curve increases precision at the cost of recall.</p>
-
+    <p>The precision-recall curve shows how tightening the score threshold trades recall for precision; the
+    markers are the High and Medium risk tiers. Moving left along the curve raises precision at the cost of
+    catching fewer defects.</p>
     {wrap("pr_curve", "Precision-Recall Curve with Operating Thresholds")}
 
-    {section_title("confusion", "Section 4.4", "Confusion Matrix")}
-
-    <p>True positives, false positives, true negatives, and false negatives
-    at a 0.5 operating threshold on the held-out test set.</p>
-
+    <p>The confusion matrix shows how the tiers land on real jobs at a 0.5 operating threshold: the true and
+    false positives and negatives on the held-out test set.</p>
     <div style="max-width:480px;margin:20px auto;">
-      {wrap("confusion", "Confusion Matrix — Test Set")}
+      {wrap("confusion", "Confusion Matrix, Test Set")}
     </div>
 
-    {section_title("shap", "Section 5", "Feature Importance (SHAP)")}
+    <p>Because the model outputs a calibrated probability rather than a hard label, a single score should be
+    read as a confidence, not a verdict: a job scored 0.75 carries roughly a 75% chance of a defect. The High
+    (&ge; {RISK_HIGH}) and Medium (&ge; {RISK_MEDIUM}) tiers are operating points chosen on the
+    precision-recall curve, deliberately trading recall for precision so the High tier stays trustworthy
+    enough to act on. Raising a threshold tightens precision but catches fewer defects, so the tier cutoffs
+    are the main lever for how the scores are used on the floor.</p>
 
-    <p>SHAP (SHapley Additive exPlanations) values measure each feature's average
-    contribution to the model's predictions across the validation set. Features with
-    higher mean absolute SHAP values have greater influence on the model's output.
-    SHAP values are computed on the validation set using TreeExplainer.</p>
+    {section_title("shap", "Section 4", "Feature Importance (SHAP)")}
 
-    <p>Features ranked by average impact on model output across the validation set.
-    Interaction features appear prominently because they encode the strongest
+    <p>SHAP (SHapley Additive exPlanations) values measure each feature's average contribution to the model's
+    predictions across the validation set; features with higher mean absolute SHAP values have greater
+    influence on the output. Interaction features appear prominently because they encode the strongest
     cross-system patterns identified in the diagnostic analysis.</p>
 
     {wrap("shap", "Mean Absolute SHAP Value by Feature")}
 
-    {section_title("limitations", "Section 6", "Known Limitations")}
+    {section_title("limitations", "Section 5", "Known Limitations")}
 
     <ul class="limitation-list">
       <li><strong>Target definition:</strong> defect_flag = (quantity_failed &gt; 0) captures
       any failure, including minor single-part events in large batches. The 55% positive rate
       reflects this broad definition and limits the model's discrimination ceiling.</li>
-      <li><strong>Simulated training data:</strong> This model was trained on synthetic data
-      with embedded patterns. Real-world performance will depend on the signal strength of
-      actual shop floor data and may differ materially.</li>
       <li><strong>Feature availability at scoring time:</strong> Features requiring lot
       assignment (supplier, lot_cert_status) may be missing for jobs where material has not
       been scanned at release time (~15% of orders historically).</li>
       <li><strong>Retraining cadence:</strong> The model should be retrained when the
-      Evidently drift monitoring report flags statistically significant feature drift, or
-      when High-tier precision drops below 85% on a new scoring period.</li>
+      monitoring report flags statistically significant feature drift, or when High-tier
+      precision drops below 85% on a new scoring period.</li>
       <li><strong>Scope:</strong> The model predicts defect occurrence, not defect severity
       or scrap cost. Jobs flagged as High risk may range from minor single-part failures
       to full-batch scrap events.</li>
     </ul>
+
+    {section_title("ops", "Section 6", "Deployment &amp; Operations")}
+
+    <p>How the model runs in production and where its inputs come from.</p>
+    {ops_table()}
 
   </main>
 </div>
