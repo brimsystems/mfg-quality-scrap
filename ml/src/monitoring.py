@@ -38,7 +38,16 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import mlflow
-from prefect import flow, task
+try:
+    from prefect import flow, task
+except ModuleNotFoundError:
+    # Prefect is the optional orchestration layer. When it is not installed, fall
+    # back to no-op decorators so the flow runs as a plain local batch.
+    def task(*args, **kwargs):
+        def _wrap(fn):
+            return fn
+        return args[0] if len(args) == 1 and callable(args[0]) and not kwargs else _wrap
+    flow = task
 
 import duckdb
 

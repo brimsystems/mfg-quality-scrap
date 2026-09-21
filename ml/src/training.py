@@ -567,7 +567,8 @@ def train_and_log_model(
         mlflow.log_artifacts(str(model_dir), artifact_path=model_type)
 
         # Log pipeline as MLflow model artifact (not registered yet)
-        mlflow.sklearn.log_model(pipeline, name=f"{model_type}_pipeline")
+        mlflow.sklearn.log_model(pipeline, name=f"{model_type}_pipeline",
+                                 serialization_format="cloudpickle")
 
         return {
             "model_type":    model_type,

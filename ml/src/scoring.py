@@ -31,7 +31,16 @@ import shap
 import mlflow
 import mlflow.sklearn
 from mlflow import MlflowClient
-from prefect import flow, task
+try:
+    from prefect import flow, task
+except ModuleNotFoundError:
+    # Prefect is the optional orchestration layer. When it is not installed, fall
+    # back to no-op decorators so the flow runs as a plain local batch.
+    def task(*args, **kwargs):
+        def _wrap(fn):
+            return fn
+        return args[0] if len(args) == 1 and callable(args[0]) and not kwargs else _wrap
+    flow = task
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
