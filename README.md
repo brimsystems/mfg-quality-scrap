@@ -64,19 +64,6 @@ Raw extracts from the three source systems, with the integration problems that c
 
 ---
 
-## Results
-
-All figures below are read directly from the reports in this repository.
-
-- **Diagnosis (39 months, January 2023 to March 2026):** 8.4K defects across 139.5K inspected parts, a 6.0% part-level defect rate, and $609K in scrap cost, concentrated in three cross-system drivers: Bending work on Shift B, Supplier C material, and high-complexity parts.
-- **Model:** a gradient-boosted classifier reaches a ROC-AUC of 0.76 on the held-out test set. In the January 2026 scoring window, its High-risk flags were correct 97% of the time (32 of 33), so a planner reviewing just those jobs is almost never wasting time.
-- **Value:** the defective jobs the model correctly flagged that month carried about $8.5K in scrap; preventing those defects before release would avoid roughly $102K a year.
-- **Monitoring:** across the three monitored periods the model held within every retraining threshold, so the standing decision is no action.
-
-Operationally, the diagnosis tells managers where to intervene, and the model turns those same patterns into a per-job flag at the point of release, so the shop can act before the scrap is made rather than after.
-
----
-
 ## Data
 
 The datasets were generated to represent typical records from the source systems involved (MES, ERP, and QMS), so the full workflow can be demonstrated on data that is safe to share publicly; the [generators are in `data_source/generate/`](data_source/generate/).
