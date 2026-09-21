@@ -32,12 +32,12 @@ Going forward, defect risk is known before a job runs, and the conditions behind
 
 | # | Deliverable | What it is | Links |
 |---|---|---|---|
-| 1 | **ERP work-order queue** (primary) | The model embedded in a JobBOSS-style queue: each job's defect-risk tier and top contributing driver, shown inline. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html) &middot; [File](docs/index.html) |
-| 2 | Analytics diagnostic report | Where defects and scrap cost concentrate across machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/report.html) &middot; [File](docs/reports/report.html) |
-| 3 | Analytics dashboard | The recurring monthly view of defect-rate and scrap-cost KPIs with trailing-twelve-month trends. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/dashboard.html) &middot; [File](docs/reports/dashboard.html) |
-| 4 | ML model overview & performance | A plain-language model card: what the model predicts, how it performs, the scrap it helps avoid, and its limits. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/ml_overview.html) &middot; [File](docs/reports/ml_overview.html) |
-| 5 | ML technical report | Training data, model selection, validation and test metrics, calibration, confusion matrix, and SHAP feature importance. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/ml_technical.html) &middot; [File](docs/reports/ml_technical.html) |
-| 6 | MLOps monitoring report | Monitoring across periods on four layers (performance, target, prediction, and feature drift) with a rules-based retraining decision. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/monitoring_report.html) &middot; [File](docs/reports/monitoring_report.html) |
+| 1 | ERP work-order queue | The model embedded in a JobBOSS-style queue: each job's defect-risk tier and top contributing driver, shown inline. | [File](docs/index.html) |
+| 2 | Analytics diagnostic report | Where defects and scrap cost concentrate across machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk. | [File](docs/reports/report.html) |
+| 3 | KPI dashboard | The recurring weekly and monthly view of defect-rate and scrap-cost KPIs with historical trends. | [File](docs/reports/dashboard.html) |
+| 4 | ML model overview & performance report | A high-level model summary: what the model predicts, how it performs, the scrap it helps avoid, and its limits. | [File](docs/reports/ml_overview.html) |
+| 5 | ML technical report | Training data, model selection, validation and test metrics, calibration, confusion matrix, and SHAP feature importance. | [File](docs/reports/ml_technical.html) |
+| 6 | MLOps monitoring report | Monitoring across periods on four layers (performance, target, prediction, and feature drift) with a rules-based retraining decision. | [File](docs/reports/monitoring_report.html) |
 
 ---
 
