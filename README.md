@@ -1,6 +1,6 @@
 # Manufacturing Data Platform: Defects & Scrap Costs
 
-**An end-to-end data platform for a mid-sized manufacturer, spanning data engineering, analytics and machine learning, applied to defects and scrap cost.**
+**An end-to-end data platform for a mid-sized manufacturer, spanning data engineering, analytics and machine learning, applied to quality issues and scrap cost.**
 
 It starts with a **data pipeline** that integrates machine, order and quality data from three disconnected systems into a single modeled dataset.
 
