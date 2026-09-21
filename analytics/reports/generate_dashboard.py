@@ -32,27 +32,47 @@ PRIOR_WEEK_END     = CURRENT_WEEK_START
 PRIOR_WEEK_START   = PRIOR_WEEK_END - pd.DateOffset(weeks=1)
 T12_CHART_START    = CURRENT_MONTH - pd.DateOffset(months=11)
 
-BRAND_BLUE   = "#3D5166"
-DARK_GREY    = "#555555"
-GOOD_GREEN   = "#1A7A3A"
-BAD_RED      = "#CC0000"
-NEUTRAL_GREY = "#AAAAAA"
-MONTHLY_BAR  = "#AAAAAA"
-AVG_LINE     = "#CC0000"
+# ── Palette (BRIM house style) ─────────────────────────────────────────────
+# Document chrome. Kept out of charts: the dark grey sits too close to the
+# chart dark blue to separate cleanly.
+DARK_GREY  = "#322B4B"   # header bars, titles, takeaways, divider lines
+BG_GREY    = "#F3F5F7"   # box and card backgrounds
+TEXT       = "#000000"   # body font
+# Chart colors.
+DARK_BLUE  = "#381FA1"   # chart primary
+LIGHT_BLUE = "#54C0E8"   # chart secondary
+ACCENT_RED = "#CC0000"   # chart accent; conditional-formatting "bad"
+MUTED_RED  = "#FFA3A3"   # chart secondary red
+MED_GREY   = "#8093A4"   # chart neutral
+LIGHT_GREY = "#D5DCE1"   # chart neutral (gridlines, unfilled areas)
+# Conditional formatting (good / medium / bad ranges).
+GREEN      = "#00A84C"   # "good" (high range)
+AMBER      = "#FFBA3F"   # "medium" (mid range)
 
-MACHINE_COLORS   = ["#3D5166","#6B8FA8","#D4881E","#4A7C59","#8E6BAF","#B94040","#A8C0D1"]
-REASON_COLORS    = ["#3D5166","#6B8FA8","#D4881E","#4A7C59","#8E6BAF","#B94040"]
-SUPPLIER_COLORS  = {"Supplier A": "#AAAAAA", "Supplier B": "#6B8FA8",
-                    "Supplier C": "#3D5166", "Supplier D": "#A8C0D1"}
-COMPLEXITY_COLORS = {"Low": "#AAAAAA", "Medium": "#6B8FA8", "High": "#3D5166"}
+# Aliases so the card and chart code below reads against the same names.
+BRAND_BLUE   = DARK_GREY     # KPI headline values and the page header are chrome
+GOOD_GREEN   = GREEN
+BAD_RED      = ACCENT_RED
+NEUTRAL_GREY = MED_GREY
+MONTHLY_BAR  = DARK_BLUE     # headline monthly series (chart primary)
+AVG_LINE     = ACCENT_RED    # trailing-average reference line (chart accent)
+
+MACHINE_COLORS   = [DARK_BLUE, LIGHT_BLUE, MED_GREY, ACCENT_RED, MUTED_RED, AMBER, LIGHT_GREY]
+REASON_COLORS    = [DARK_BLUE, LIGHT_BLUE, MED_GREY, ACCENT_RED, MUTED_RED, AMBER]
+SUPPLIER_COLORS  = {"Supplier A": MED_GREY, "Supplier B": LIGHT_BLUE,
+                    "Supplier C": DARK_BLUE, "Supplier D": LIGHT_GREY}
+COMPLEXITY_COLORS = {"Low": LIGHT_GREY, "Medium": LIGHT_BLUE, "High": DARK_BLUE}
 
 plt.rcParams.update({
     "figure.facecolor": "white", "axes.facecolor": "white",
-    "axes.edgecolor":   "#DDDDDD", "axes.grid": False,
+    "axes.edgecolor":   LIGHT_GREY, "axes.grid": False,
     "font.family":      "sans-serif", "font.size": 18,
     "axes.titlesize":   20, "axes.titleweight": "bold",
     "axes.labelsize":   18, "xtick.labelsize":  15,
     "ytick.labelsize":  15, "legend.fontsize":  15,
+    "text.color":       TEXT, "axes.labelcolor": TEXT,
+    "axes.titlecolor":  TEXT, "xtick.color":     TEXT,
+    "ytick.color":      TEXT,
     "figure.dpi":       130,
 })
 
@@ -102,20 +122,20 @@ def direction(current, prior, lower_is_better, neutral=False):
 def kpi_card(cur_val, pri_val, arrow, arrow_color, pct_str, bar_color):
     indicator = f'<span style="font-size:18px;color:{arrow_color};font-weight:bold;margin-left:4px;">{arrow} {pct_str}</span>' \
                 if arrow else ""
-    return f'''<div style="border:1px solid #DDDDDD;border-radius:8px;
+    return f'''<div style="border:1px solid {LIGHT_GREY};border-radius:8px;
                 padding:16px 8px 0 28px;background:white;flex:1;min-width:0;overflow:hidden;">
       <div style="display:flex;align-items:baseline;flex-wrap:wrap;margin-bottom:2px;">
-        <span style="font-size:28px;font-weight:700;color:{BRAND_BLUE};line-height:1.1;">{cur_val}</span>
+        <span style="font-size:28px;font-weight:700;color:{DARK_GREY};line-height:1.1;">{cur_val}</span>
         {indicator}
       </div>
-      <div style="font-size:18px;color:#333333;margin-bottom:12px;">Current</div>
-      <div style="font-size:22px;font-weight:600;color:#999;">{pri_val}</div>
-      <div style="font-size:14px;color:#555555;margin-bottom:0;">Prior</div>
+      <div style="font-size:18px;color:{TEXT};margin-bottom:12px;">Current</div>
+      <div style="font-size:22px;font-weight:600;color:{MED_GREY};">{pri_val}</div>
+      <div style="font-size:14px;color:{MED_GREY};margin-bottom:0;">Prior</div>
       <div style="height:8px;background:{bar_color};border-radius:0 0 8px 8px;margin-top:12px;margin-left:-28px;margin-right:-8px;"></div>
     </div>'''
 
 def col_header(label):
-    return f'<div style="flex:1;min-width:0;text-align:center;font-size:18px;font-weight:700;color:#111111;padding-bottom:8px;">{label}</div>'
+    return f'<div style="flex:1;min-width:0;text-align:center;font-size:18px;font-weight:700;color:{DARK_GREY};padding-bottom:8px;">{label}</div>'
 
 def qi_cards_for(dr_cur, dr_pri):
     qi_c, qi_p = parts_inspected(dr_cur), parts_inspected(dr_pri)
@@ -153,7 +173,7 @@ def kpi_row(label, qi_cards, sc_cards):
     sc_html = "".join(sc_cards)
     return f'''
     <div style="display:flex;margin-bottom:10px;align-items:stretch;">
-      <div style="width:{ROW_LABEL_W};flex-shrink:0;font-weight:700;color:#111111;
+      <div style="width:{ROW_LABEL_W};flex-shrink:0;font-weight:700;color:{DARK_GREY};
                   font-size:18px;display:flex;align-items:center;padding-right:8px;">
         {label}
       </div>
@@ -161,26 +181,26 @@ def kpi_row(label, qi_cards, sc_cards):
       <div style="display:flex;gap:4px;flex:1;padding-left:9px;">{sc_html}</div>
     </div>'''
 
-# ── KPI section header — full-width blue box ───────────────────────────────
+# ── KPI section header: full-width dark grey banner ────────────────────────
 kpi_header = f'''
 <div style="background:{DARK_GREY};color:white;border-radius:8px;padding:12px 20px;
             font-size:20px;font-weight:700;margin-bottom:12px;text-align:center;">
   KPIs
 </div>'''
 
-# ── Column group headers — no background, black text, bottom border ────────
+# ── Column group headers: no background, dark grey text, bottom border ─────
 section_headers = f'''
 <div style="display:flex;margin-bottom:4px;">
   <div style="width:{ROW_LABEL_W};flex-shrink:0;"></div>
   <div style="flex:1;padding-right:9px;">
-    <div style="font-size:18px;font-weight:700;color:#111111;
-                border-bottom:2px solid #111111;padding-bottom:8px;text-align:center;">
+    <div style="font-size:18px;font-weight:700;color:{DARK_GREY};
+                border-bottom:2px solid {DARK_GREY};padding-bottom:8px;text-align:center;">
       Defects
     </div>
   </div>
   <div style="flex:1;padding-left:9px;">
-    <div style="font-size:18px;font-weight:700;color:#111111;
-                border-bottom:2px solid #111111;padding-bottom:8px;text-align:center;">
+    <div style="font-size:18px;font-weight:700;color:{DARK_GREY};
+                border-bottom:2px solid {DARK_GREY};padding-bottom:8px;text-align:center;">
       Scrap Costs
     </div>
   </div>
@@ -209,13 +229,13 @@ kpi_section = kpi_header + section_headers + col_headers + weekly_row + monthly_
 
 # ── Chart helpers ──────────────────────────────────────────────────────────
 def chart_style(ax):
-    ax.yaxis.grid(True, color="#EEEEEE", linestyle="-", linewidth=0.8)
+    ax.yaxis.grid(True, color=LIGHT_GREY, linestyle="-", linewidth=0.8)
     ax.xaxis.grid(False)
     ax.set_axisbelow(True)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_color("#DDDDDD")
-    ax.spines["bottom"].set_color("#DDDDDD")
+    ax.spines["left"].set_color(LIGHT_GREY)
+    ax.spines["bottom"].set_color(LIGHT_GREY)
 
 def fig_to_b64(fig):
     buf = io.BytesIO()
@@ -232,17 +252,11 @@ def add_segment_pct_labels(ax, x_pos, segment_vals, bottoms, bar_totals,
                     fontsize=fontsize, color="white", fontweight="bold")
 
 def stacked_legend(ax, avg_label, fontsize=15):
+    """Place a single legend of the stacked series below the x-axis."""
     handles, labels = ax.get_legend_handles_labels()
-    avg_h  = [h for h, l in zip(handles, labels) if "TTM avg" in l]
-    avg_l  = [l for l in labels if "TTM avg" in l]
-    bar_h  = [h for h, l in zip(handles, labels) if "TTM avg" not in l]
-    bar_l  = [l for l in labels if "TTM avg" not in l]
-    leg1 = ax.legend(bar_h, bar_l, loc="upper center",
-                     bbox_to_anchor=(0.5, -0.18), ncol=3,
-                     fontsize=fontsize, frameon=False)
-    ax.add_artist(leg1)
-    if avg_h:
-        ax.legend(avg_h, avg_l, loc="upper right", fontsize=fontsize, frameon=True)
+    ncol = min(len(labels), 4) or 1
+    ax.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.16),
+              ncol=ncol, fontsize=fontsize, frameon=False)
 
 # ── Monthly data prep ──────────────────────────────────────────────────────
 monthly_dr = (
@@ -307,11 +321,11 @@ ax.axhline(avg_pct, color=AVG_LINE, linestyle="--",
 y_range = vals.max() - vals.min() if vals.max() > 0 else 1
 for xi, val in zip(x_months, vals):
     ax.text(xi, val + y_range*0.05, f"{val:.1f}%", ha="center",
-            va="bottom", fontsize=15, color="#555")
+            va="bottom", fontsize=15, color=TEXT)
 ax.set_xticks(x_months)
 ax.set_xticklabels(mo_labels, rotation=45, ha="right")
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"{v:.1f}%"))
-ax.set_ylabel("Fail Rate (%)")
+ax.set_ylabel("Defect Rate")
 ax.legend(fontsize=15)
 chart_style(ax)
 plt.tight_layout()
@@ -327,8 +341,8 @@ ax.axhline(avg_k, color=AVG_LINE, linestyle="--",
            linewidth=2, label=f"TTM avg (${avg_k:,.0f}K)")
 y_range = vals_k.max() - vals_k.min() if vals_k.max() > 0 else 1
 for xi, val in zip(x_months, vals_k):
-    ax.text(xi, val + y_range*0.02, f"${val:,.0f}", ha="center",
-            va="bottom", fontsize=15, color="#333")
+    ax.text(xi, val + y_range*0.02, f"${val:,.0f}K", ha="center",
+            va="bottom", fontsize=15, fontweight="bold", color=TEXT)
 ax.set_xticks(x_months)
 ax.set_xticklabels(mo_labels, rotation=45, ha="right")
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"${v:,.0f}K"))
@@ -390,7 +404,7 @@ for reason, (vals, bots) in seg_data.items():
     add_segment_pct_labels(ax, x_months, vals, bots, bottoms)
 y_range = bottoms.max() - bottoms.min() if bottoms.max() > 0 else 1
 for xi, tot in zip(x_months, bottoms):
-    ax.text(xi, tot + y_range*0.02, f"${tot:,.0f}", ha="center",
+    ax.text(xi, tot + y_range*0.02, f"${tot:,.0f}K", ha="center",
             va="bottom", fontsize=15, fontweight="bold", color="#333")
 ax.set_xticks(x_months)
 ax.set_xticklabels(mo_labels, rotation=45, ha="right")
@@ -414,11 +428,10 @@ monthly_cx = (
 fig, ax = plt.subplots(figsize=(13, 5.5))
 for cx in ["Low","Medium","High"]:
     sub = monthly_cx[monthly_cx["complexity"]==cx]
-    sub_labels = [mo_labels[i] for i, m in enumerate(sorted(monthly_dr["order_month"].unique()))
-                  if m in sub["order_month"].values]
     sub_vals   = sub.set_index("order_month").reindex(
         sorted(monthly_dr["order_month"].unique())).dropna()
-    ax.plot(mo_labels[:len(sub_vals)], sub_vals["fr"].values*100,
+    yv = sub_vals["fr"].values * 100
+    ax.plot(range(len(yv)), yv,
             color=COMPLEXITY_COLORS[cx], linewidth=2.5,
             marker="o", markersize=6, label=cx)
 ax.axhline(avg_fail_rate*100, color=AVG_LINE, linestyle="--",
@@ -426,10 +439,11 @@ ax.axhline(avg_fail_rate*100, color=AVG_LINE, linestyle="--",
 ax.set_xticks(x_months)
 ax.set_xticklabels(mo_labels, rotation=45, ha="right")
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"{v:.1f}%"))
-ax.set_ylabel("Defect Rate (%)")
-ax.legend(fontsize=15)
+ax.set_ylabel("Defect Rate")
+ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=4,
+          fontsize=15, frameon=False)
 chart_style(ax)
-plt.tight_layout()
+plt.tight_layout(rect=[0, 0.08, 1, 1])
 charts_b64["defect_complexity"] = fig_to_b64(fig)
 plt.close()
 
@@ -451,7 +465,7 @@ for machine, (vals, bots) in seg_data.items():
     add_segment_pct_labels(ax, x_months, vals, bots, bottoms)
 y_range = bottoms.max() - bottoms.min() if bottoms.max() > 0 else 1
 for xi, tot in zip(x_months, bottoms):
-    ax.text(xi, tot + y_range*0.02, f"${tot:,.0f}", ha="center",
+    ax.text(xi, tot + y_range*0.02, f"${tot:,.0f}K", ha="center",
             va="bottom", fontsize=15, fontweight="bold", color="#333")
 ax.set_xticks(x_months)
 ax.set_xticklabels(mo_labels, rotation=45, ha="right")
@@ -476,7 +490,7 @@ all_sup_months = sorted(monthly_dr["order_month"].unique())
 fig, ax = plt.subplots(figsize=(13, 5.5))
 for sup in sorted(monthly_sup["supplier"].unique()):
     sub = monthly_sup[monthly_sup["supplier"]==sup].set_index("order_month").reindex(all_sup_months)
-    color = SUPPLIER_COLORS.get(sup, MONTHLY_BAR)
+    color = SUPPLIER_COLORS.get(sup, MED_GREY)
     lw = 2.5 if sup=="Supplier C" else 1.8
     ms = 7 if sup=="Supplier C" else 5
     ax.plot(mo_labels, sub["fr"].values*100,
@@ -486,7 +500,7 @@ ax.axhline(avg_fail_rate*100, color=AVG_LINE, linestyle="--",
 ax.set_xticks(x_months)
 ax.set_xticklabels(mo_labels, rotation=45, ha="right")
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"{v:.1f}%"))
-ax.set_ylabel("Defect Rate (%)")
+ax.set_ylabel("Defect Rate")
 ax.legend(fontsize=15)
 chart_style(ax)
 plt.tight_layout()
@@ -500,13 +514,14 @@ labor_k  = monthly_sc_agg["labor"].values    / 1000
 totals_k = mat_k + labor_k
 mat_pct   = mat_k   / totals_k * 100
 labor_pct = labor_k / totals_k * 100
-ax.bar(x_months, mat_pct,   width=0.7, color="#3D5166", label="Material")
-ax.bar(x_months, labor_pct, width=0.7, color="#6B8FA8", label="Labor", bottom=mat_pct)
+ax.bar(x_months, mat_pct,   width=0.7, color=DARK_BLUE, label="Material")
+ax.bar(x_months, labor_pct, width=0.7, color=LIGHT_BLUE, label="Labor", bottom=mat_pct)
 for xi, mp, lp in zip(x_months, mat_pct, labor_pct):
     if mp >= 5:
         ax.text(xi, mp/2, f"{mp:.0f}%", ha="center", va="center",
                 fontsize=15, color="white", fontweight="bold")
     if lp >= 5:
+        # White on the light blue segment, consistent with the other stacked charts.
         ax.text(xi, mp + lp/2, f"{lp:.0f}%", ha="center", va="center",
                 fontsize=15, color="white", fontweight="bold")
 ax.set_xticks(x_months)
@@ -524,10 +539,15 @@ plt.close()
 
 # ── Chart card ─────────────────────────────────────────────────────────────
 def chart_card(key, title):
-    return f'''<div style="background:white;border:1px solid #DDDDDD;border-radius:8px;padding:20px;">
-      <div style="font-size:18px;font-weight:700;color:#111111;margin-bottom:14px;">{title}</div>
+    return f'''<div style="background:white;border:1px solid {LIGHT_GREY};border-radius:8px;padding:20px;">
+      <div style="font-size:18px;font-weight:700;color:{DARK_GREY};margin-bottom:14px;">{title}</div>
       <img src="data:image/png;base64,{charts_b64[key]}" style="width:100%;height:auto;display:block;">
     </div>'''
+
+def trend_section_header(label):
+    return f'''<div style="font-size:18px;font-weight:700;color:{DARK_GREY};
+      border-bottom:2px solid {DARK_GREY};padding-bottom:8px;text-align:center;
+      margin:24px 0 16px 0;">{label}</div>'''
 
 chart_grid = f'''
 <div style="margin-top:36px;">
@@ -535,15 +555,19 @@ chart_grid = f'''
               font-size:20px;font-weight:700;margin-bottom:16px;text-align:center;">
     Trend Charts (Trailing 12 Months)
   </div>
+  {trend_section_header("Defects")}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     {chart_card("fail_rate",        "Defect Rate")}
-    {chart_card("scrap_cost",       "Total Scrap Cost ($K)")}
     {chart_card("defect_complexity","Defect Rate by Part Complexity")}
-    {chart_card("scrap_reason",     "Scrap Cost by Reason ($K)")}
     {chart_card("defect_supplier",  "Defect Rate by Supplier")}
-    {chart_card("cost_machine",     "Scrap Cost by Machine Type ($K)")}
     {chart_card("defect_machine",   "Defects by Machine Type")}
-    {chart_card("mat_labor",        "Material & Labor as % of Scrap Cost")}
+  </div>
+  {trend_section_header("Scrap Costs")}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    {chart_card("scrap_cost",   "Total Scrap Cost")}
+    {chart_card("scrap_reason", "Scrap Cost by Reason")}
+    {chart_card("cost_machine", "Scrap Cost by Machine Type")}
+    {chart_card("mat_labor",    "Scrap Cost, as % Material vs. Labor")}
   </div>
 </div>'''
 
@@ -557,9 +581,9 @@ html = f'''<!DOCTYPE html>
     *, *::before, *::after {{ box-sizing: border-box; }}
     body {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #F5F6F8; margin: 0; padding: 0; color: #333;
+      background: {BG_GREY}; margin: 0; padding: 0; color: {TEXT};
     }}
-    .page-header {{ background: {BRAND_BLUE}; color: white; padding: 20px 40px; }}
+    .page-header {{ background: {DARK_GREY}; color: white; padding: 20px 40px; }}
     .page-header h1 {{ margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }}
     .container {{
       max-width: 1600px; margin: 0 auto; padding: 28px 32px 64px 32px;

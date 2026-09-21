@@ -7,6 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.patches as mpatches
+from matplotlib.colors import LinearSegmentedColormap
 from scipy import stats
 import base64, io
 
@@ -24,24 +25,39 @@ sc["scrap_date"]   = pd.to_datetime(sc["scrap_date"])
 sc["scrap_month"]  = pd.to_datetime(sc["scrap_month"])
 
 DATE_MIN_LABEL = "January 2023"
-DATE_MAX_LABEL = "December 2025"
+DATE_MAX_LABEL = "March 2026"
 
-# ── Palette ────────────────────────────────────────────────────────────────
-BRAND_BLUE = "#3D5166"
-ACCENT     = "#6B8FA8"
-LIGHT_BLUE = "#A8C0D1"
-AMBER      = "#D4881E"
-RED        = "#CC0000"
-GREEN      = "#1A7A3A"
-GREY       = "#AAAAAA"
-DARK_GREY  = "#555555"
-TEXT       = "#222222"
-BOX_GREY   = "#DDDDDD"
+# ── Palette (BRIM house style) ─────────────────────────────────────────────
+# Document chrome. Kept out of charts: the dark grey sits too close to the
+# chart dark blue to separate cleanly.
+DARK_GREY  = "#322B4B"   # header bars, titles, takeaways, divider lines
+BG_GREY    = "#F3F5F7"   # box and card backgrounds
+TEXT       = "#000000"   # body font
+# Chart colors.
+DARK_BLUE  = "#381FA1"   # chart primary
+LIGHT_BLUE = "#54C0E8"   # chart secondary
+ACCENT_RED = "#CC0000"   # chart accent; conditional-formatting "bad"
+MUTED_RED  = "#FFA3A3"   # chart secondary red
+MED_GREY   = "#8093A4"   # chart neutral
+LIGHT_GREY = "#D5DCE1"   # chart neutral (gridlines, unfilled areas)
+# Conditional formatting (good / medium / bad ranges).
+GREEN      = "#00A84C"   # "good" (high range)
+AMBER      = "#FFBA3F"   # "medium" (mid range)
 
-SUPPLIER_COLORS   = {"Supplier A": GREY, "Supplier B": LIGHT_BLUE,
-                     "Supplier C": BRAND_BLUE, "Supplier D": ACCENT}
-COMPLEXITY_COLORS = {"Low": GREY, "Medium": LIGHT_BLUE, "High": BRAND_BLUE}
-CX_MACHINE_COLORS = [BRAND_BLUE, GREY, AMBER, GREEN]
+# Aliases so the chart code below reads against the same names as before.
+BRAND_BLUE = DARK_BLUE
+ACCENT     = LIGHT_BLUE
+RED        = ACCENT_RED
+GREY       = MED_GREY
+BOX_GREY   = LIGHT_GREY
+
+SUPPLIER_COLORS   = {"Supplier A": MED_GREY, "Supplier B": LIGHT_BLUE,
+                     "Supplier C": DARK_BLUE, "Supplier D": LIGHT_GREY}
+COMPLEXITY_COLORS = {"Low": LIGHT_GREY, "Medium": LIGHT_BLUE, "High": DARK_BLUE}
+CX_MACHINE_COLORS = [DARK_BLUE, LIGHT_BLUE, MED_GREY, MUTED_RED]
+
+# Sequential ramp for the heatmap, kept inside the brand reds.
+HEAT_CMAP = LinearSegmentedColormap.from_list("brim_heat", [BG_GREY, MUTED_RED, ACCENT_RED])
 
 # ── Chart sizing constants — change here to update all charts ──────────────
 CHART_W   = 8.2    # inches — matches content column width
@@ -57,23 +73,26 @@ TITLE_FS = 13
 
 plt.rcParams.update({
     "figure.facecolor": "white",  "axes.facecolor":  "white",
-    "axes.edgecolor":   "#DDDDDD","axes.grid":        False,
+    "axes.edgecolor":   LIGHT_GREY, "axes.grid":      False,
     "font.family":      "sans-serif",
     "font.size":        BODY_FS,
     "axes.titlesize":   TITLE_FS, "axes.titleweight": "bold",
     "axes.labelsize":   BODY_FS,  "xtick.labelsize":  BODY_FS,
     "ytick.labelsize":  BODY_FS,  "legend.fontsize":  BODY_FS,
+    "text.color":       TEXT,     "axes.labelcolor":  TEXT,
+    "axes.titlecolor":  TEXT,     "xtick.color":      TEXT,
+    "ytick.color":      TEXT,
     "figure.dpi":       CHART_DPI,
 })
 
 def chart_style(ax):
-    ax.yaxis.grid(True, color="#EEEEEE", linestyle="-", linewidth=0.8)
+    ax.yaxis.grid(True, color=LIGHT_GREY, linestyle="-", linewidth=0.8)
     ax.xaxis.grid(False)
     ax.set_axisbelow(True)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_color("#DDDDDD")
-    ax.spines["bottom"].set_color("#DDDDDD")
+    ax.spines["left"].set_color(LIGHT_GREY)
+    ax.spines["bottom"].set_color(LIGHT_GREY)
 
 def make_fig(h=None):
     """Create a standardized figure. h overrides default height."""
@@ -133,6 +152,61 @@ rates_sup_cx = (
 sc_high = rates_sup_cx[(rates_sup_cx["supplier"]=="Supplier C")&(rates_sup_cx["complexity"]=="High")]["dr"].values[0]
 oth_high = rates_sup_cx[(rates_sup_cx["supplier"]!="Supplier C")&(rates_sup_cx["complexity"]=="High")]["dr"].mean()
 
+# ── Totals, trailing window, and financial-impact estimates ─────────────────
+total_defects = int(dr["quantity_failed"].sum())
+n_months      = dr["order_month"].nunique()
+window_years  = n_months / 12.0
+
+# Trailing 12 months (most recent 12 order-months in the data).
+_months_sorted = sorted(dr["order_month"].unique())
+_last12  = _months_sorted[-12:]
+_dr12    = dr[dr["order_month"].isin(_last12)]
+_sc12    = sc[sc["scrap_month"].isin(_last12)]
+l12_defects = int(_dr12["quantity_failed"].sum())
+l12_fr      = fail_rate(_dr12)
+l12_scrap   = _sc12["total_scrap_cost"].sum()
+L12_MIN_LABEL = pd.Timestamp(_last12[0]).strftime("%B %Y")
+L12_MAX_LABEL = pd.Timestamp(_last12[-1]).strftime("%B %Y")
+
+# Monthly means over the full window, used as the "3-yr mean" overlays.
+mean_defects_mo = dr.groupby("order_month")["quantity_failed"].sum().mean()
+mean_scrap_mo   = sc.groupby("scrap_month")["total_scrap_cost"].sum().mean()
+
+# Financial impact. Savings from bringing a segment's defect rate to a benchmark
+# scale that segment's observed scrap cost (material + labor) by the proportional
+# rate reduction: savings = scrap_cost * (rate - target) / rate. This assumes a
+# roughly constant cost per defective unit and that the whole gap is addressable,
+# so the figures are an upper-bound opportunity. The segments overlap, so they
+# are not additive.
+def _seg_savings(seg_dr, seg_scrap_cost, target):
+    r = fail_rate(seg_dr)
+    return r, seg_scrap_cost, (seg_scrap_cost * (r - target) / r if r > 0 else 0.0)
+
+# P1: Bending Shift B -> Bending Shift A rate.
+p1_scrap = sc[(sc["machine_type"]=="Bending") & (sc["shift_code"]=="Shift B")]["total_scrap_cost"].sum()
+_, _, p1_save = _seg_savings(dr[p1_mask], p1_scrap, p1b_fr)
+
+# P2: Supplier C -> 6% (other suppliers' rate on high-complexity work). Scrap is
+# attributed by work order, since the scrap record does not always carry supplier.
+P2_TARGET = 0.06
+_p2_wos  = dr[p2_mask.fillna(False)]["work_order_id"]
+p2_scrap = sc[sc["work_order_id"].isin(_p2_wos)]["total_scrap_cost"].sum()
+_, _, p2_save = _seg_savings(dr[p2_mask.fillna(False)], p2_scrap, P2_TARGET)
+
+# P3a (conservative): high-complexity Bending -> 12% (in line with other operations).
+P3A_TARGET = 0.12
+_hcb_dr  = dr[(dr["complexity"]=="High") & (dr["machine_type"]=="Bending")]
+p3a_scrap = sc[(sc["complexity"]=="High") & (sc["machine_type"]=="Bending")]["total_scrap_cost"].sum()
+p3a_fr, _, p3a_save = _seg_savings(_hcb_dr, p3a_scrap, P3A_TARGET)
+
+# P3b (stretch): all high-complexity -> 9% (a blended rate achieved in 3 of the
+# months in the window).
+P3B_TARGET = 0.09
+p3b_scrap = sc[sc["complexity"]=="High"]["total_scrap_cost"].sum()
+_, _, p3b_save = _seg_savings(dr[p3_mask], p3b_scrap, P3B_TARGET)
+
+def per_yr(x): return x / window_years
+
 # ═══════════════════════════════════════════════════════════════════════════
 # CHART FUNCTIONS
 # Each returns a base64 PNG string.
@@ -140,39 +214,63 @@ oth_high = rates_sup_cx[(rates_sup_cx["supplier"]!="Supplier C")&(rates_sup_cx["
 # ═══════════════════════════════════════════════════════════════════════════
 
 def chart_defect_rate_trend():
+    """Trailing 12 months: total defects (columns, left axis) and defect rate
+    (line, right axis), with the 3-yr mean rate overlaid."""
     monthly = (
         dr.dropna(subset=["defect_rate"])
         .groupby("order_month")
         .agg(qi=("quantity_inspected","sum"), qf=("quantity_failed","sum"))
         .assign(fr=lambda d: d["qf"]/d["qi"])
         .reset_index().sort_values("order_month")
-    )
-    labels, ticks = monthly_labels(monthly["order_month"])
+    ).tail(12)
+    labels = [pd.Timestamp(m).strftime("%b '%y") for m in monthly["order_month"]]
+    x = np.arange(len(monthly))
+    defects = monthly["qf"].values
+    rate_pct = monthly["fr"].values * 100
     fig, ax = make_fig()
-    ax.plot(labels, monthly["fr"]*100, color=BRAND_BLUE,
-            linewidth=2, marker="o", markersize=4)
-    ax.axhline(monthly["fr"].mean()*100, color=GREY, linestyle=":", linewidth=1.5,
-               label=f"Mean ({monthly['fr'].mean():.1%})")
-    ax.set_xticks(ticks); ax.set_xticklabels(ticks, rotation=45, ha="right")
-    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"{v:.1f}%"))
-    ax.set_ylabel("Defect Rate (%)"); ax.legend()
-    chart_style(ax); plt.tight_layout()
+    ax.bar(x, defects, color=LIGHT_BLUE, width=0.62, label="Total defects", zorder=1)
+    for xi, v in zip(x, defects):
+        ax.text(xi, v + defects.max()*0.02, f"{v:,.0f}", ha="center", va="bottom",
+                fontsize=BODY_FS-2, color=TEXT)
+    ax.set_ylabel("Total Defects"); ax.set_ylim(0, defects.max()*1.28)
+    ax2 = ax.twinx()
+    ax2.plot(x, rate_pct, color=DARK_BLUE, linewidth=2, marker="o", markersize=4,
+             label="Defect rate", zorder=3)
+    for xi, v in zip(x, rate_pct):
+        ax2.text(xi, v + rate_pct.max()*0.04, f"{v:.1f}%", ha="center", va="bottom",
+                 fontsize=BODY_FS-2, color=DARK_BLUE, fontweight="bold")
+    ax2.axhline(overall_fr*100, color=GREY, linestyle=":", linewidth=1.5,
+                label=f"3-yr mean ({overall_fr:.1%})")
+    ax2.set_ylabel("Defect Rate (%)"); ax2.set_ylim(0, 12)
+    ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"{v:.0f}%"))
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=45, ha="right")
+    h1,l1 = ax.get_legend_handles_labels(); h2,l2 = ax2.get_legend_handles_labels()
+    ax.legend(h1+h2, l1+l2, loc="upper center", bbox_to_anchor=(0.5,-0.22), ncol=3, frameon=False)
+    chart_style(ax); ax2.grid(False)
+    plt.tight_layout()
     return fig_to_b64(fig)
 
 def chart_scrap_trend():
+    """Trailing 12 months of scrap cost with per-month labels and the 3-yr mean."""
     monthly = (
         sc.groupby("scrap_month")["total_scrap_cost"]
         .sum().reset_index().sort_values("scrap_month")
-    )
-    labels, ticks = monthly_labels(monthly["scrap_month"])
+    ).tail(12)
+    labels = [pd.Timestamp(m).strftime("%b '%y") for m in monthly["scrap_month"]]
+    x = np.arange(len(monthly))
+    vals = monthly["total_scrap_cost"].values / 1000
     fig, ax = make_fig()
-    ax.bar(labels, monthly["total_scrap_cost"]/1000, color=BRAND_BLUE, width=0.7)
-    ax.axhline(monthly["total_scrap_cost"].mean()/1000, color=GREY,
-               linestyle=":", linewidth=1.5,
-               label=f"Mean (${monthly['total_scrap_cost'].mean()/1000:,.0f}K/mo)")
-    ax.set_xticks(ticks); ax.set_xticklabels(ticks, rotation=45, ha="right")
+    ax.bar(x, vals, color=BRAND_BLUE, width=0.65)
+    for xi, v in zip(x, vals):
+        ax.text(xi, v + vals.max()*0.02, f"${v:,.0f}K", ha="center", va="bottom",
+                fontsize=BODY_FS-2, color=TEXT)
+    ax.axhline(mean_scrap_mo/1000, color=GREY, linestyle=":", linewidth=1.5,
+               label=f"3-yr mean (${mean_scrap_mo/1000:,.0f}K/mo)")
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.set_ylim(0, vals.max()*1.2)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"${v:,.0f}K"))
-    ax.set_ylabel("Scrap Cost ($K)"); ax.legend()
+    ax.set_ylabel("Scrap Cost ($K)")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5,-0.18), frameon=False)
     chart_style(ax); plt.tight_layout()
     return fig_to_b64(fig)
 
@@ -189,7 +287,7 @@ def chart_p1_heatmap():
     )
     fig, ax = make_fig(h=3.0)
     sns.heatmap(pivot*100, ax=ax, annot=annot_arr, fmt="",
-                cmap="YlOrRd", linewidths=0.5, linecolor="white",
+                cmap=HEAT_CMAP, linewidths=0.5, linecolor="white",
                 cbar_kws={"label":"Mean Defect Rate (%)"},
                 annot_kws={"size": BODY_FS, "family": "sans-serif"})
     ax.set_xlabel(""); ax.set_ylabel("")
@@ -218,7 +316,7 @@ def chart_p1_boxplot():
         patch.set_facecolor(BOX_GREY)
     ax.text(0.98, 0.97, f"Welch t-test  p = {p_val:.4f}",
             transform=ax.transAxes, ha="right", va="top",
-            fontsize=BODY_FS, color=DARK_GREY)
+            fontsize=BODY_FS, color=MED_GREY)
     ax.set_ylabel("Work Order Defect Rate (%)\n(each point = one work order)")
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v,_: f"{v:.0f}%"))
     chart_style(ax); plt.tight_layout()
@@ -297,7 +395,7 @@ def chart_p2_complexity_mix():
     ax.legend(title="Complexity", loc="upper center",
               bbox_to_anchor=(0.5, -0.18), ncol=3, frameon=False)
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-    ax.yaxis.grid(True, color="#EEEEEE", linestyle="-", linewidth=0.8)
+    ax.yaxis.grid(True, color=LIGHT_GREY, linestyle="-", linewidth=0.8)
     ax.set_axisbelow(True)
     plt.tight_layout(rect=[0, 0.12, 1, 1])
     return fig_to_b64(fig)
@@ -483,7 +581,7 @@ def section_title(id, label, title):
       <h2 class="section-title">{title}</h2>
     </div>'''
 
-def finding_block(id, title, mult_label, mult_value):
+def finding_block(id, title, mult_label, mult_value, save_value, save_label):
     return f'''<div class="finding-block" id="{id}">
       <div class="finding-left"><div class="finding-title">{title}</div></div>
       <div class="finding-right">
@@ -492,6 +590,10 @@ def finding_block(id, title, mult_label, mult_value):
             <div class="finding-stat-val">{mult_value}</div>
             <div class="finding-stat-lbl">{mult_label}</div>
           </div>
+          <div>
+            <div class="finding-stat-val" style="color:{GREEN};">{save_value}</div>
+            <div class="finding-stat-lbl">{save_label}</div>
+          </div>
         </div>
       </div>
     </div>'''
@@ -499,31 +601,31 @@ def finding_block(id, title, mult_label, mult_value):
 # ── Bullet content ─────────────────────────────────────────────────────────
 p1_bullets = bullets([
     f"Bending × Shift B aggregate defect rate: <strong>{fmt_pct(p1_fr)}</strong> vs "
-    f"<strong>{fmt_pct(p1b_fr)}</strong> on Shift A — a <strong>{p1_mult:.1f}×</strong> elevation.",
+    f"<strong>{fmt_pct(p1b_fr)}</strong> on Shift A, a <strong>{p1_mult:.1f}×</strong> elevation.",
     "The Shift B elevation is statistically significant (Welch t-test, p&nbsp;&lt;&nbsp;0.05) and "
     "visible in the distribution of individual work order outcomes: the median defect rate and "
     "the spread of outcomes are both higher on Shift B.",
-    "The pattern is persistent across the full analysis period — not a short-term anomaly. "
-    "The monthly trend chart shows Shift B running above Shift A in essentially every month of the 36-month window.",
+    "The pattern is persistent across the full analysis period, not a short-term anomaly. "
+    "The monthly trend chart shows Shift B running above Shift A in essentially every month of the analysis period.",
     "The elevation is specific to bending operations and does not appear on other machine types "
-    "(laser cutting, punching, welding). Bending is the most operator-dependent process on the floor — "
+    "(laser cutting, punching, welding). Bending is the most operator-dependent process on the floor, so "
     "small differences in setup, technique, or in-process verification produce measurable dimensional variation "
     "in ways that are less likely on CNC-driven operations.",
     "Likely drivers include inconsistent equipment recalibration between shifts, setup state "
-    "handoff gaps, and operator experience differentials — all of which are more consequential "
+    "handoff gaps, and operator experience differentials, all of which are more consequential "
     "in bending than in other operations due to the direct role of operator judgment in achieving "
     "accurate bend angles.",
 ])
 
 p2_bullets = bullets([
     f"Supplier C aggregate defect rate: <strong>{fmt_pct(p2_fr)}</strong> vs "
-    f"<strong>{fmt_pct(p2b_fr)}</strong> for all other suppliers — a <strong>{p2_mult:.1f}×</strong> elevation.",
+    f"<strong>{fmt_pct(p2b_fr)}</strong> for all other suppliers, a <strong>{p2_mult:.1f}×</strong> elevation.",
     "The differential persists across machine types and shifts, indicating a material quality "
     "issue rather than a downstream process issue.",
     f"Critically, the elevation holds within every complexity tier: Supplier C's High-complexity "
     f"defect rate is <strong>{fmt_pct(sc_high)}</strong> vs <strong>{fmt_pct(oth_high)}</strong> "
     f"for other suppliers on the same complexity tier. The complexity mix across suppliers is "
-    f"broadly consistent — Supplier C does not disproportionately supply high-complexity parts — "
+    f"broadly consistent (Supplier C does not disproportionately supply high-complexity parts), "
     f"ruling out complexity as a confounding factor.",
     "The monthly defect rate chart shows Supplier C running persistently above all other suppliers "
     "across the analysis period, with no convergence trend.",
@@ -531,12 +633,12 @@ p2_bullets = bullets([
 
 p3_bullets = bullets([
     f"High-complexity aggregate defect rate: <strong>{fmt_pct(p3_fr)}</strong> vs "
-    f"<strong>{fmt_pct(p3b_fr)}</strong> for all other tiers — the strongest "
+    f"<strong>{fmt_pct(p3b_fr)}</strong> for all other tiers, the strongest "
     "single-dimension signal in the dataset.",
     "Defect rate elevation is most pronounced in bending operations, running at about double "
     "the defect rate of other operations using high complexity parts.",
     "The relationship is monotonic: Low → Medium → High tracks with strictly increasing defect rates "
-    "across all 36 months. This is not a threshold effect — complexity elevation is gradual and consistent.",
+    "across the full analysis period. This is not a threshold effect: complexity elevation is gradual and consistent.",
     "The complexity effect is not uniform across machine types. The grouped chart shows that certain "
     "equipment types show a more pronounced sensitivity to complexity than others, suggesting that "
     "machine capability and tooling condition interact with part complexity in producing defects.",
@@ -557,7 +659,7 @@ html = f'''<!DOCTYPE html>
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
       background: #FFFFFF; color: {TEXT}; font-size: 16px; line-height: 1.7;
     }}
-    .page-header {{ background: {BRAND_BLUE}; color: white; padding: 20px 40px; }}
+    .page-header {{ background: {DARK_GREY}; color: white; padding: 20px 40px; }}
     .page-header h1 {{ font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }}
     .layout {{ display: flex; max-width: 1200px; margin: 0 auto; padding: 0 40px; }}
 
@@ -565,20 +667,20 @@ html = f'''<!DOCTYPE html>
     .toc {{
       width: 200px; flex-shrink: 0; padding: 40px 20px 40px 0;
       position: sticky; top: 0; height: 100vh; overflow-y: auto;
-      border-right: 1px solid #EEEEEE;
+      border-right: 1px solid {LIGHT_GREY};
     }}
     .toc-title {{
       font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-      color: #AAAAAA; margin-bottom: 14px; font-weight: 600;
+      color: {MED_GREY}; margin-bottom: 14px; font-weight: 600;
     }}
     .toc a {{
-      display: block; font-size: 13px; color: #666; text-decoration: none;
+      display: block; font-size: 13px; color: {MED_GREY}; text-decoration: none;
       padding: 4px 0 4px 10px; border-left: 2px solid transparent; line-height: 1.4;
     }}
-    .toc a:hover {{ color: {BRAND_BLUE}; border-left-color: {BRAND_BLUE}; }}
-    .toc a.sub {{ font-size: 12px; padding-left: 20px; color: #AAAAAA; }}
-    .toc a.sub:hover {{ color: {BRAND_BLUE}; border-left-color: {BRAND_BLUE}; }}
-    .toc hr {{ border: none; border-top: 1px solid #EEEEEE; margin: 8px 0; }}
+    .toc a:hover {{ color: {DARK_GREY}; border-left-color: {DARK_GREY}; }}
+    .toc a.sub {{ font-size: 12px; padding-left: 20px; color: {MED_GREY}; }}
+    .toc a.sub:hover {{ color: {DARK_GREY}; border-left-color: {DARK_GREY}; }}
+    .toc hr {{ border: none; border-top: 1px solid {LIGHT_GREY}; margin: 8px 0; }}
 
     /* ── Content ── */
     .content {{ flex: 1; padding: 40px 0 80px 52px; max-width: 880px; }}
@@ -586,72 +688,80 @@ html = f'''<!DOCTYPE html>
     /* ── Section titles ── */
     .section-title-block {{
       margin: 48px 0 24px 0; padding-bottom: 12px;
-      border-bottom: 2px solid {BRAND_BLUE};
+      border-bottom: 2px solid {DARK_GREY};
     }}
     .content > .section-title-block:first-child {{ margin-top: 12px; }}
     .section-label {{
       font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-      color: {BRAND_BLUE}; font-weight: 600; margin-bottom: 4px;
+      color: {TEXT}; font-weight: 600; margin-bottom: 4px;
     }}
     .section-title {{ font-size: 22px; font-weight: 700; color: {TEXT}; }}
 
     /* ── Body text ── */
-    p {{ margin-bottom: 16px; color: #333; font-size: 16px; }}
+    p {{ margin-bottom: 16px; color: {TEXT}; font-size: 16px; }}
 
     /* ── Context block ── */
     .context-block {{
-      background: #F7F8FA; border-top: 3px solid {BRAND_BLUE};
+      background: {BG_GREY}; border-top: 3px solid {DARK_GREY};
       padding: 24px 28px 20px 28px; margin-bottom: 0;
     }}
     .context-title {{
-      font-size: 22px; font-weight: 700; color: {BRAND_BLUE}; margin-bottom: 14px;
+      font-size: 22px; font-weight: 700; color: {DARK_GREY}; margin-bottom: 14px;
     }}
     .context-block p {{
-      font-size: 15px; line-height: 1.8; color: #444; margin-bottom: 12px;
+      font-size: 15px; line-height: 1.8; color: {TEXT}; margin-bottom: 12px;
     }}
     .context-block p:last-child {{ margin-bottom: 0; }}
 
     /* ── Finding blocks ── */
     .finding-block {{
-      display: flex; align-items: center; background: #F7F8FA;
-      border-left: 4px solid {BRAND_BLUE}; padding: 18px 22px;
+      display: flex; align-items: center; background: {BG_GREY};
+      border-left: 4px solid {DARK_GREY}; padding: 18px 22px;
       margin: 32px 0 20px 0; gap: 24px;
     }}
     .finding-left {{ flex: 1; }}
-    .finding-title {{ font-size: 17px; font-weight: 700; color: {TEXT}; line-height: 1.3; }}
+    .finding-title {{ font-size: 17px; font-weight: 700; color: {DARK_GREY}; line-height: 1.3; }}
     .finding-right {{ flex-shrink: 0; }}
     .finding-stat-group {{ display: flex; gap: 28px; text-align: right; }}
-    .finding-stat-val {{ font-size: 24px; font-weight: 700; color: {RED}; line-height: 1; }}
-    .finding-stat-lbl {{ font-size: 11px; color: #888; margin-top: 3px; }}
+    .finding-stat-val {{ font-size: 24px; font-weight: 700; color: {ACCENT_RED}; line-height: 1; }}
+    .finding-stat-lbl {{ font-size: 11px; color: {MED_GREY}; margin-top: 3px; }}
 
     /* ── Bullet lists ── */
-    .findings-list {{ margin: 12px 0 20px 20px; color: #333; }}
+    .findings-list {{ margin: 12px 0 20px 20px; color: {TEXT}; }}
     .findings-list li {{ margin-bottom: 8px; font-size: 15px; line-height: 1.6; }}
 
     /* ── Charts ── */
     .chart-title {{
-      font-size: 17px; font-weight: 700; color: {TEXT};
+      font-size: 17px; font-weight: 700; color: {DARK_GREY};
       text-align: center; margin-bottom: 8px;
     }}
     .chart-wrap {{
-      margin: 20px 0; border: 1px solid #EEEEEE; border-radius: 4px; padding: 12px;
+      margin: 20px 0; border: 1px solid {LIGHT_GREY}; border-radius: 4px; padding: 12px;
     }}
     .chart-caption {{
-      font-size: 12px; color: #888; margin-top: 8px;
+      font-size: 12px; color: {MED_GREY}; margin-top: 8px;
       text-align: center; font-style: italic;
     }}
 
     /* ── Callouts ── */
     .cost-callout {{
-      background: #FFF8F0; border-left: 3px solid {AMBER};
-      padding: 16px 22px; margin: 20px 0; font-size: 15px; color: #555;
+      background: {BG_GREY}; border-left: 3px solid {AMBER};
+      padding: 16px 22px; margin: 20px 0; font-size: 15px; color: {TEXT};
     }}
-    .cost-callout strong {{ color: {TEXT}; }}
+    .cost-callout strong {{ color: {DARK_GREY}; }}
+
+    /* ── Financial-impact table ── */
+    .fin-table {{ width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 14px; }}
+    .fin-table th {{ background: {BG_GREY}; text-align: left; padding: 9px 12px; font-size: 12px;
+      text-transform: uppercase; letter-spacing: 0.5px; color: {MED_GREY}; border-bottom: 2px solid {LIGHT_GREY}; }}
+    .fin-table td {{ padding: 9px 12px; border-bottom: 1px solid {LIGHT_GREY}; color: {TEXT}; }}
+    .fin-table th.num, .fin-table td.num {{ text-align: right; }}
+    .fin-table td.save {{ font-weight: 700; color: {GREEN}; text-align: right; }}
 
     /* ── Methodology ── */
-    .method-item {{ margin-bottom: 20px; padding-left: 18px; border-left: 2px solid #EEEEEE; }}
+    .method-item {{ margin-bottom: 20px; padding-left: 18px; border-left: 2px solid {LIGHT_GREY}; }}
     .method-item strong {{
-      display: block; color: {BRAND_BLUE}; margin-bottom: 3px; font-size: 15px;
+      display: block; color: {DARK_GREY}; margin-bottom: 3px; font-size: 15px;
     }}
   </style>
 </head>
@@ -671,6 +781,8 @@ html = f'''<!DOCTYPE html>
     <a href="#p2" class="sub">2. Supplier C Material</a>
     <a href="#p3" class="sub">3. High Complexity Parts</a>
     <hr>
+    <a href="#financial">Financial Impact</a>
+    <hr>
     <a href="#methodology">Methodology</a>
   </nav>
 
@@ -678,29 +790,39 @@ html = f'''<!DOCTYPE html>
 
     {section_title("exec", "Section 1", "Executive Summary")}
 
-    <p>Across {fmt_num(total_orders)} production work orders and {fmt_num(total_inspected)} parts
-    inspected between {DATE_MIN_LABEL} and {DATE_MAX_LABEL}, the overall defect rate was
-    <strong>{fmt_pct(overall_fr)}</strong> and total scrap cost was
-    <strong>{fmt_usd(total_scrap)}</strong>. Both metrics have remained broadly steady over the
-    historical period, with a slight upward trend.</p>
+    <p>From {DATE_MIN_LABEL} to {DATE_MAX_LABEL} ({n_months} months), there were
+    {total_orders/1e3:.1f}K production work orders and {total_inspected/1e3:.1f}K parts were
+    inspected. Of these, there were {total_defects/1e3:.1f}K total defects, a defect rate of
+    <strong>{fmt_pct(overall_fr)}</strong>, and total scrap cost of
+    <strong>${total_scrap/1e3:,.0f}K</strong>. These metrics remained broadly steady over the
+    period, with no significant upward or downward trend.</p>
 
-    {wrap("defect_trend", "Defect Rate by Month")}
+    <p>Over the past 12 months ({L12_MIN_LABEL} to {L12_MAX_LABEL}), there were
+    {l12_defects/1e3:.1f}K total defects, a defect rate of <strong>{fmt_pct(l12_fr)}</strong>, and
+    total scrap cost of <strong>${l12_scrap/1e3:,.0f}K</strong>.</p>
+
+    {wrap("defect_trend", "Defects and Defect Rate by Month (TTM)")}
     {wrap("scrap_trend",  "Total Scrap Cost by Month")}
 
-    <p>We built a data pipeline to extract, standardize, and merge records across all
-    three systems (ERP, MES, QMS) into a single source, then conducted comprehensive analytical diagnostics to
-    surface previously unseen patterns.</p>
+    <p>In this analysis, we set out to understand defects and scrap costs at a deeper level. We built
+    a data pipeline to extract, standardize, and merge records across all three systems (ERP, MES,
+    QMS) into a single source, allowing us to surface previously unseen patterns.</p>
 
-    <p>As a result of this analysis, three distinct patterns emerged that point to specific,
-    concentrated, and addressable operational drivers of elevated quality cost.
-    Bending operations on Shift B run at <strong>{p1_mult:.1f}×</strong> the defect rate of
-    Shift A; material sourced from Supplier C at <strong>{p2_mult:.1f}×</strong> other suppliers;
-    and high-complexity parts at <strong>{p3_mult:.1f}×</strong> lower-complexity equivalents.
-    None of these patterns were visible within any single source system.</p>
+    <p>Three distinct findings emerged, pointing to specific and addressable operational drivers of
+    elevated defects and scrap cost. They are: (i) bending operations on Shift B run at
+    <strong>{p1_mult:.1f}×</strong> the defect rate of Shift A; (ii) material sourced from Supplier C
+    run at <strong>{p2_mult:.1f}×</strong> the defect rate of other suppliers; and (iii)
+    high-complexity parts run at <strong>{p3_mult:.1f}×</strong> the defect rate of lower-complexity
+    equivalents. These findings are detailed in Section 2.</p>
 
-    <p>The financial impact of these elevated defect rates extends well beyond the direct cost
-    of scrapped material. Each defective run also requires rework labor, disrupts downstream scheduling when
-    jobs must be remade, adds inspection overhead, and potentially carries customer relationship costs.</p>
+    <p>Bringing each finding to a benchmark defect rate is a meaningful scrap-cost savings
+    opportunity, on the order of <strong>${per_yr(p1_save)/1e3:,.0f}K per year</strong> on the
+    Shift B bending gap, <strong>${per_yr(p2_save)/1e3:,.0f}K per year</strong> on Supplier C
+    material, and up to <strong>${per_yr(p3b_save)/1e3:,.0f}K per year</strong> on high-complexity
+    work, quantified in
+    Section 3. The financial impact extends well beyond the direct cost of scrapped material: each
+    defective run also requires rework labor, disrupts downstream scheduling, adds inspection
+    overhead, and potentially carries customer relationship costs.</p>
 
     {section_title("findings", "Section 2", "Findings")}
 
@@ -709,17 +831,19 @@ html = f'''<!DOCTYPE html>
 
     {finding_block("p1",
         "Bending operations on Shift B produce defects at {:.1f}× the rate of Shift A".format(p1_mult),
-        "vs Bending Shift A", f"{p1_mult:.1f}×")}
+        "vs Bending Shift A", f"{p1_mult:.1f}×",
+        f"${per_yr(p1_save)/1e3:,.0f}K/yr", "opportunity at Shift A level")}
 
     {p1_bullets}
 
     {wrap("p1_heatmap", "Defect Rate by Machine Type × Shift")}
-    {wrap("p1_boxplot", "Defect Rate Distribution — Bending by Shift vs All Machines")}
-    {wrap("p1_trend",   "Bending Defect Rate Over Time — Shift B vs Shift A")}
+    {wrap("p1_boxplot", "Defect Rate Distribution: Bending by Shift vs All Machines")}
+    {wrap("p1_trend",   "Bending Defect Rate Over Time: Shift B vs Shift A")}
 
     {finding_block("p2",
         "Supplier C material is associated with a {:.1f}× elevated defect rate".format(p2_mult),
-        "vs all other suppliers", f"{p2_mult:.1f}×")}
+        "vs all other suppliers", f"{p2_mult:.1f}×",
+        f"${per_yr(p2_save)/1e3:,.0f}K/yr", "opportunity at 6% target")}
 
     {p2_bullets}
 
@@ -730,7 +854,8 @@ html = f'''<!DOCTYPE html>
 
     {finding_block("p3",
         "High-complexity parts fail at {:.1f}× the rate of other complexity tiers".format(p3_mult),
-        "vs non-High complexity", f"{p3_mult:.1f}×")}
+        "vs non-High complexity", f"{p3_mult:.1f}×",
+        f"${per_yr(p3b_save)/1e3:,.0f}K/yr", "opportunity at 9% target")}
 
     {p3_bullets}
 
@@ -738,15 +863,72 @@ html = f'''<!DOCTYPE html>
     {wrap("p3_cx_machine",     "Defect Rate by Complexity × Machine Type")}
     {wrap("p3_historical",     "Monthly Defect Rate by Complexity")}
 
-    {section_title("methodology", "Section 3", "Methodology")}
+    {section_title("financial", "Section 3", "Financial Impact")}
+
+    <p>Each finding above translates into scrap cost that could be recovered by bringing the affected
+    segment's defect rate down to a benchmark. The estimates below scale each segment's observed
+    scrap cost (material plus rework labor) by the proportional reduction in its defect rate:
+    <em>savings = segment scrap cost &times; (current rate &minus; target rate) &divide; current
+    rate</em>.</p>
+
+    <table class="fin-table">
+      <thead><tr><th>Finding</th><th class="num">Current</th><th>Benchmark target</th>
+        <th class="num">Est. savings / yr</th></tr></thead>
+      <tbody>
+        <tr><td>P1 &middot; Bending Shift B</td><td class="num">{fmt_pct(p1_fr)}</td>
+          <td>Shift A level ({fmt_pct(p1b_fr)})</td>
+          <td class="save">${per_yr(p1_save)/1e3:,.0f}K</td></tr>
+        <tr><td>P2 &middot; Supplier C material</td><td class="num">{fmt_pct(p2_fr)}</td>
+          <td>6% (others, high-complexity)</td>
+          <td class="save">${per_yr(p2_save)/1e3:,.0f}K</td></tr>
+        <tr><td>P3a &middot; High-complexity bending</td><td class="num">{fmt_pct(p3a_fr)}</td>
+          <td>12% (other operations)</td>
+          <td class="save">${per_yr(p3a_save)/1e3:,.0f}K</td></tr>
+        <tr><td>P3b &middot; High-complexity, all operations</td><td class="num">{fmt_pct(p3_fr)}</td>
+          <td>9% (stretch)</td>
+          <td class="save">${per_yr(p3b_save)/1e3:,.0f}K</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Assumptions and caveats.</strong> Scrap cost is the actual per-event material and
+    rework-labor cost recorded in the QMS, attributed to each segment (Supplier C by work order,
+    since the scrap record does not always carry the lot's supplier). The estimates assume the cost
+    per defective unit is roughly constant and that the full gap to benchmark is addressable, so they
+    are an upper-bound opportunity rather than committed savings. The segments overlap (a single work
+    order can be Bending, Shift B, Supplier C, and high-complexity at once), so the rows are not
+    additive. P3 is shown two ways: a conservative case that brings only high-complexity bending
+    ({fmt_pct(p3a_fr)}) in line with the other operations (12%), and a stretch case that brings all
+    high-complexity work to a 9% blended rate, a level the shop already reached in 3 of the
+    {n_months} months in the window.</p>
+
+    <p><strong>Levers.</strong> The three findings differ sharply in how hard they are to act on:</p>
+    <ul class="findings-list">
+      <li><strong>P1 (Bending Shift B): low cost, mostly process discipline.</strong> Operational
+      improvements include standardizing shift-start setup and calibration, tightening the setup
+      handoff between shifts, adding a first-piece verification step, and coaching the operators whose
+      runs drive the spread. No capital; the main commitment is supervision and adherence.</li>
+      <li><strong>P2 (Supplier C): low internal cost, but needs supplier and commercial
+      action.</strong> Open a supplier corrective-action process with Supplier C, tighten incoming
+      inspection and acceptance criteria on their lots, and, if the gap persists, requalify or shift
+      volume to a better-performing supplier. Little internal capital, but it depends on supplier
+      engagement and a sourcing decision.</li>
+      <li><strong>P3 (High complexity): highest value, highest effort, some capital.</strong>
+      High-complexity bending is the outlier at {fmt_pct(p3a_fr)}. Levers include tooling and fixture
+      upgrades, process-capability studies on the hardest features, and design-for-manufacturability
+      review with customers on the worst parts. Parts of this require capital (tooling, fixturing,
+      possibly machine capability) and engineering time, so it is a medium-term program rather than a
+      quick fix.</li>
+    </ul>
+
+    {section_title("methodology", "Section 4", "Methodology")}
 
     <div class="method-item">
       <strong>Data Sources</strong>
       Inspection records and scrap events from the QMS; production work orders and part catalog
       from the ERP; material lot receipts and certification status from the WMS; operator records
-      from the HR system. The analysis covers {DATE_MIN_LABEL} through {DATE_MAX_LABEL} —
-      {fmt_num(total_orders)} work orders and {fmt_num(total_inspected)} parts inspected across
-      all five production lines.
+      from the HR system. The analysis covers {DATE_MIN_LABEL} through {DATE_MAX_LABEL},
+      spanning {fmt_num(total_orders)} work orders and {fmt_num(total_inspected)} parts inspected
+      across all five production lines.
     </div>
 
     <div class="method-item">
