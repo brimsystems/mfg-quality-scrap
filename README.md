@@ -1,152 +1,123 @@
-# Manufacturing Data Platform & Defect Risk Intelligence 
+# Manufacturing Data Platform & Defect Risk Intelligence
 
-**An end-to-end, simulated data platform for a metal fabrication shop: from raw multi-system data to analytics (diagnostic report and KPI dashboard) and a machine learning (ML) model that flags pre-production defect risks, embedded inside the existing ERP system.**
+**An end-to-end data platform for a metal fabrication shop: it integrates machine, ERP, and quality data, diagnoses where defects and scrap cost concentrate, and runs a machine learning model that scores each work order's defect risk before it runs, delivered inside the shop's existing work-order system and monitored over time.**
 
-> Built by Brian Davis — fractional data engineering & analytics partner for SMB manufacturers.
+> Built by Brian Davis, fractional data engineering and analytics partner for SMB manufacturers.
+
+[![ERP work-order queue with embedded defect risk flags](docs/screenshots/erp_queue.png)](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html)
+
+> **[Open the live ERP work-order queue &rarr;](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html)** &nbsp;·&nbsp; **[All six deliverables &rarr;](https://brimsystems.github.io/mfg-quality-scrap/)**
 
 ---
 
-## Situation Overview
+## The problem
 
-A sheet-metal fabricator (~$30M revenue, two shifts, four machine groups) was losing margin to elevated defect rates, but couldn't see *why*. The company was already capturing the data needed to understand the drivers of defects. However, the data was stored across disconnected systems: machine health and production data was stored in the MES; supplier, operator, and schedule data was stored in the ERP; and inspection outcomes were stored in the QMS. These data silos meant that the combinations of operating conditions that actually drive defects, for example, an aging machine running a high-complexity job on a thin-gauge lot late in the schedule, went unseen until defects already occured.
+A sheet-metal fabricator (~$30M revenue, two shifts, four machine groups) was losing margin to elevated defect rates but couldn't see why. The data that explained it was already being captured, just split across three disconnected systems: machine and production data in the MES, supplier, operator, and schedule data in the ERP, and inspection outcomes in the QMS. The combinations that actually drive defects, for example an aging machine running a high-complexity job on a thin-gauge lot late in the schedule, only surface when those systems are joined, so they went unseen until the scrap was already made.
 
-This project addresses that situation end-to-end: it integrates the three data systems, diagnoses where the cost actually concentrates, builds a machine learning model that scores each work order's defect risk before it runs, delivers that score within the existing work-order system so that operators can see it live, then monitors that model's effectiveness over time using MLOps best practices.
+This project integrates the three systems, diagnoses where the cost concentrates, builds a model that scores each work order's defect risk before it runs, delivers that score inside the existing work-order queue, and monitors the model over time.
 
 ---
 
 ## Deliverables
 
-### 1. ERP work-order queue with embedded defect risk flags — *primary deliverable*
-A simulated shop-floor work-order queue, with each job's defect-risk tier and top risk driver surfaced inline. By embedding the model within a JobBOSS-style ERP system, operators can see within systems they already use which jobs need a second look, and why, in plain operational language.
-
-> **[Open the live ERP work-order queue with embedded defect risk flags →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/)**
-
-### 2. Analytics diagnostic report — *understanding the drivers of defects and scrap costs*
-
-An adhoc quality and scrap diagnostic: where defects and scrap costs concentrate by machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk of defects occuring. 
-
-> **[Open the analytics diagnostic report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/report.html)**
-
-### 3. Analytics dashboard — *monthly view of defect rate and scrap cost KPIs*
-
-Drivers of defect risks and scrap costs with historical trends. Represents the recurring operational view that managers would use to understand their business.
-
-> **[Open the analytics dashboard →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/dashboard.html)**
-
-### 4. ML model overview — *plain-language model summary*
-
-A concise model card for a non-technical stakeholder: what the ML model predicts, what it was trained on, how it performs at a glance, and where its limits are. Answers the question, "what does this model do and can I trust it?"
-
-> **[Open the ML model overview →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/ml_overview.html)**
-
-### 5. ML model technical report — *depth for the technical evaluator*
-
-The full technical detail: training data summary, model selection comparison, validation/test performance, calibration, confusion matrix, and SHAP-based feature importance. For the reader who wants to verify the rigor underneath the outputs above.
-
-> **[Open the ML model technical report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/ml_technical.html)**
-
-### 6. MLOps monitoring report — *how the model performs over time in production*
-
-A production-monitoring dashboard tracking the model across periods on four layers (performance, target drift, prediction drift, and feature drift), with an explicit, rules-based retraining decision. This report reflects MLOps best practices and answers "is this model producing reliable results over time that we can continue to rely on?"
-
-> **[Open the MLOps monitoring report →](https://brimsystems.github.io/mfg-dataplatform-defectrisk/reports/monitoring_report.html)**
+| # | Deliverable | What it is | Links |
+|---|---|---|---|
+| 1 | **ERP work-order queue** (primary) | The model embedded in a JobBOSS-style queue: each job's defect-risk tier and top contributing driver, shown inline. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html) &middot; [File](docs/index.html) |
+| 2 | Analytics diagnostic report | Where defects and scrap cost concentrate across machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/report.html) &middot; [File](docs/reports/report.html) |
+| 3 | Analytics dashboard | The recurring monthly view of defect-rate and scrap-cost KPIs with trailing-twelve-month trends. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/dashboard.html) &middot; [File](docs/reports/dashboard.html) |
+| 4 | ML model overview & performance | A plain-language model card: what the model predicts, how it performs, the scrap it helps avoid, and its limits. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/ml_overview.html) &middot; [File](docs/reports/ml_overview.html) |
+| 5 | ML technical report | Training data, model selection, validation and test metrics, calibration, confusion matrix, and SHAP feature importance. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/ml_technical.html) &middot; [File](docs/reports/ml_technical.html) |
+| 6 | MLOps monitoring report | Monitoring across periods on four layers (performance, target, prediction, and feature drift) with a rules-based retraining decision. | [Live](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/monitoring_report.html) &middot; [File](docs/reports/monitoring_report.html) |
 
 ---
 
 ## How it works
 
+```mermaid
+flowchart LR
+  subgraph SRC["Source systems"]
+    MES["MES<br/>machine &amp; production"]
+    ERP["ERP<br/>orders, supplier, schedule"]
+    QMS["QMS<br/>inspections &amp; scrap"]
+  end
+  MES --> DBT
+  ERP --> DBT
+  QMS --> DBT
+  DBT["dbt on DuckDB<br/>staging &rarr; marts"] --> MARTS[("Conformed marts")]
+  MARTS --> AN["Diagnostic report<br/>+ dashboard"]
+  MARTS --> ML["ML pipeline<br/>features &rarr; train &rarr; score"]
+  ML --> QUEUE["ERP work-order queue<br/>with embedded risk flags"]
+  ML --> MON["MLOps monitoring"]
 ```
-Data source systems  →  dbt integration & pipeline  →  data marts  →  analytics (diagnosis, dashboard & ML) → MLOps monitoring
 
-```
-
-This project works end-to-end, moving left to right in the sequence above. Raw extracts from three data source systems with the integration problems that come with them, including mismatched IDs, inconsistent naming, and varying granularity, are combined using a tested dbt pipeline into data marts. Those marts feed the analytics report and dashboard as well as the machine learning pipeline. The data is split into training, validation and test sets, and the machine learning model is then built. Ongoing model scoring is set up using MLOps best practices and runs as a monthly batch, with each period monitored against training and validation references.
+Raw extracts from the three source systems, with the integration problems that come with them (mismatched IDs, inconsistent naming, varying granularity), are combined by a tested dbt pipeline into conformed marts. Those marts feed the analytics report and dashboard and the ML pipeline. The data is split by time into training, validation, and test sets; three candidate classifiers are tuned and the best is registered. Scoring runs as a monthly batch, and each period is monitored against training and validation references.
 
 ---
 
-## Repository structure
+## Results
 
-```
-metalfab-data-platform/
-├── README.md
-├── pyproject.toml · poetry.lock · LICENSE · .gitignore
-├── data-source/               ←   data generation + the DuckDB warehouse
-│   └── generate/
-├── data-pipeline/             ←   dbt project: staging → marts, with tests
-│   └── models/
-├── analytics/                 ←   diagnostic report + operating dashboard
-│   └── reports/               ←   generator scripts and working outputs
-├── ml/                        ←   the machine learning model lifecycle
-│   ├── src/
-│   │   ├── features.py        ←   shared feature engineering (single source of truth)
-│   │   ├── training.py        ←   train, select, register; emits validation reference
-│   │   ├── scoring.py         ←   monthly batch scoring + SHAP drivers
-│   │   └── monitoring.py      ←   four-layer drift + performance monitoring
-│   ├── notebooks/             ←   analytical prep (read-only documentation)
-│   └── reports/               ←   ML report generators (overview, technical, monitoring, ERP)
-└── docs/                      ←   what GitHub Pages serves
-    ├── index.html             ←   the ERP demo (root URL)
-    ├── reports/               ←   rendered HTML reports
-```
+All figures below are read directly from the reports in this repository.
+
+- **Diagnosis (39 months, January 2023 to March 2026):** 8.4K defects across 139.5K inspected parts, a 6.0% part-level defect rate, and $609K in scrap cost, concentrated in three cross-system drivers: Bending work on Shift B, Supplier C material, and high-complexity parts.
+- **Model:** a gradient-boosted classifier reaches a ROC-AUC of 0.76 on the held-out test set. In the January 2026 scoring window, its High-risk flags were correct 97% of the time (32 of 33), so a planner reviewing just those jobs is almost never wasting time.
+- **Value:** the defective jobs the model correctly flagged that month carried about $8.5K in scrap; preventing those defects before release would avoid roughly $102K a year.
+- **Monitoring:** across the three monitored periods the model held within every retraining threshold, so the standing decision is no action.
+
+Operationally, the diagnosis tells managers where to intervene, and the model turns those same patterns into a per-job flag at the point of release, so the shop can act before the scrap is made rather than after.
 
 ---
 
-## Tech stack
+## Data
+
+The datasets were generated to represent typical records from the source systems involved (MES, ERP, and QMS), so the full workflow can be demonstrated on data that is safe to share publicly; the [generators are in `data_source/generate/`](data_source/generate/).
+
+---
+
+## Running it locally
+
+```bash
+# 1. Environment
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e .                   # project + dependencies from pyproject.toml
+
+# 2. Generate data and build the warehouse
+python3 -m data_source.generate.run_generator
+cd data_pipeline && dbt build && cd ..
+
+# 3. Analytics (diagnostic report + dashboard)
+cd analytics/reports && python3 generate_report.py && python3 generate_dashboard.py && cd ../..
+
+# 4. ML lifecycle (train -> score -> monitor)
+cd ml
+python3 src/training.py            # trains, selects, registers the production model
+python3 src/scoring.py             # monthly batch scoring with SHAP drivers
+python3 src/monitoring.py          # four-layer drift and performance monitoring
+cd ..
+
+# 5. Client-facing report generators
+cd ml/reports
+python3 generate_erp_dashboard.py
+python3 generate_ml_overview.py
+python3 generate_ml_technical.py
+python3 generate_monitoring_report.py
+cd ../..
+```
+
+The report generators write standalone HTML; the copies served by GitHub Pages live under [`docs/`](docs/).
+
+---
+
+## Stack
 
 | Layer | Tools |
 |---|---|
-| Integration & transformation | dbt, DuckDB (local dev) / Azure SQL (production target) |
+| Integration & transformation | dbt, DuckDB |
 | Analytics & reporting | Python, pandas, matplotlib, HTML/CSS |
 | Modeling | XGBoost, scikit-learn, Optuna, SHAP |
 | MLOps | MLflow (tracking & registry), Evidently (drift), Prefect (orchestration) |
-| Delivery | Static HTML/JS (ERP simulation), GitHub Pages |
-
-Stack reflects personal expertise and project constraints; real engagements are tool-agnostic and meet the client where their systems already are.
+| Delivery | Static HTML, GitHub Pages |
 
 ---
 
-## Reproduce locally
-
-<details>
-<summary>Setup and run order</summary>
-
-```bash
-# 1. Environment 
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .          # installs the project + dependencies declared in pyproject.toml
-
-# 2. Generate data and build the warehouse
-python3 -m data_source.generate.run_generator     # adjust to your generator entry point
-cd data-pipeline && dbt build && cd ..
-
-# 3. Analytics
-cd analytics/reports && python3 generate_report.py && python3 generate_dashboard.py && cd ../..
-
-# 4. ML lifecycle (train → score → monitor)
-cd ml
-python3 src/training.py        # trains, registers Production model, writes validation reference
-python3 src/scoring.py         # monthly batch scoring (Jan–Mar)
-python3 src/monitoring.py      # four-layer monitoring across periods
-cd ..
-
-# 5. Client deliverables
-cd ml/reports && python3 generate_erp_dashboard.py && python3 generate_monitoring_report.py && cd ../..
-```
-
-</details>
-
----
-
-## A note on the data
-
-This project runs on a representative dataset modeled on a metal fabrication shop. It was generated to reflect the real integration challenges and operational patterns of the sector, without using any client's data. That's deliberate: it demonstrates the full diagnosis-to-execution workflow end to end, on data I can share publicly. The analytics and ML model results are therefore illustrative, *and do not reflect any specific shop*.
-
----
-
-## About
-
-Brian Davis is a fractional data engineering and analytics partner for small and mid-sized  manufacturers. Through embedded partnership rather than transactional consulting, I implement data-driven operational improvements that create immediate and lasting business value. 
-
-**[Brian Davis]** — brian@brimsystems.com 
-
+Brian Davis, fractional data engineering and analytics partner for SMB manufacturers &middot; brian@brimsystems.com
