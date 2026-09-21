@@ -20,11 +20,11 @@ The machine learning model's defect risk predictions are embedded into the compa
 
 ## Business Context
 
-A sheet-metal fabricator (~$30M revenue) was losing margin to elevated defect rates. To date, the company's approach to managing defects and scrap data consisted of reviewing scrap tallies after the fact, a manual process that assigned cost but never explained cause.
+A sheet-metal fabricator (~$30M revenue) was losing margin to elevated defect rates. To date, the company's approach to managing defects and scrap data consisted of reviewing scrap tallies after the fact, a manual and labor-intensive process that assigned cost but couldn't explain cause.
 
-The data that explained these elevated defect rates was already being captured, just split across three disconnected systems: machine and production data in the MES, supplier, operator, and schedule data in the ERP, and inspection outcomes in the QMS.
+The data that explained these elevated defect rates was already being captured, just split across three disconnected systems: machine and production data in the MES, supplier, operator, and schedule data in the ERP, and inspection outcomes in the QMS. Integrating these disparate systems revealed the operating conditions that drive defects, for example an aging machine running a high-complexity job on a thin-gauge lot late in the schedule.
 
-Integrating these disparate systems revealed the operating conditions that drive defects, for example an aging machine running a high-complexity job on a thin-gauge lot late in the schedule. Going forward, defect risk is known before a job runs, and the conditions behind it are visible while there is still time to change the setup, the material or the schedule.
+Going forward, defect risk is known before a job runs, and the conditions behind it are visible while there is still time to change the setup, the material or the schedule.
 
 ---
 
