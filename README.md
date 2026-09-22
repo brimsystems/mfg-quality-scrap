@@ -47,19 +47,19 @@ Going forward, defect risk is known before a job runs, and the conditions behind
 
 | Layer | What it is, does and contains |
 |---|---|
-| Staging | One model per source table across the MES, ERP, HR, materials and QMS. Each cleans, types and renames a single raw extract into a consistent shape, without joining across systems. |
-| Intermediate | Joins the staged tables into conformed entities: production orders enriched with their machine, operator, material and part context, orders matched to inspection results, and scrap quantities costed into dollars. |
-| Marts | The analysis-ready tables the reports and model read: defect rates by machine, shift, operator, material and complexity; operator-level quality performance; and scrap cost summaries. |
+| Staging | One model per source table (MES, ERP, HR, Materials and QMS). Each cleans and transforms raw data into a consistent shape and format. |
+| Intermediate | Joins the staged tables into conformed datasets: production orders enriched with their machine, operator, material and part context, orders matched to inspection results, and scrap quantities costed into dollars. |
+| Marts | Aggregate and roll up the intermediate datasets into the analysis-ready tables the reports and model read: defect rates grouped by machine, shift, operator, material and complexity; operator-level quality performance; and scrap cost summaries. |
 
 ### Machine learning model: [`ml/src/`](ml/src/)
 
 | File | What it does |
 |---|---|
-| `features.py` | Builds the model features from the conformed marts. |
-| `training.py` | Trains and tunes the three candidate classifiers, then selects and registers the best. |
-| `scoring.py` | Runs monthly batch scoring with SHAP driver attribution. |
-| `monitoring.py` | Four-layer drift and performance monitoring against reference windows. |
-| `inspect_drift.py` | One-off diagnostic for inspecting the underlying Evidently drift metrics. |
+| `features.py` | Builds the model features (machine age, job complexity, material and supplier, operator and shift, schedule variance, plus engineered interaction terms) from the conformed marts. |
+| `training.py` | Trains and tunes the three model candidates, then selects and registers the best. |
+| `scoring.py` | Runs monthly batch scoring to flag each open work order's defect-risk tier and top contributing driver before the job runs. |
+| `monitoring.py` | Four-layer drift and performance monitoring against reference windows, following MLOps best practices across performance, target drift, prediction drift and feature drift. |
+| `inspect_drift.py` | One-off diagnostic for inspecting the underlying drift metrics from `monitoring.py`. |
 
 ---
 
