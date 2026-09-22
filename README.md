@@ -41,6 +41,44 @@ Going forward, defect risk is known before a job runs, and the conditions behind
 
 ---
 
+## Code
+
+The core source lives in two folders.
+
+### Data pipeline: [`data_pipeline/models/`](data_pipeline/models/)
+
+dbt models on DuckDB, built in dependency order: staging normalizes each source extract, intermediate conforms them into shared entities, and marts assemble the analysis-ready tables the reports and model read.
+
+| Layer | Model | What it does |
+|---|---|---|
+| Staging | `stg_erp__part_catalog` | Part master from the ERP, typed and deduplicated. |
+| Staging | `stg_erp__production_orders` | Production and work orders from the ERP. |
+| Staging | `stg_hr__operators` | Operator roster from HR. |
+| Staging | `stg_materials__lots` | Material lots with gauge and attributes. |
+| Staging | `stg_mes__machines` | Machine master from the MES. |
+| Staging | `stg_qms__inspection_records` | Inspection outcomes from the QMS. |
+| Staging | `stg_qms__scrap_events` | Scrap events and quantities from the QMS. |
+| Intermediate | `int_quality__orders_enriched` | Orders joined to machine, operator, material and part context. |
+| Intermediate | `int_quality__orders_with_inspections` | Orders matched to their inspection results. |
+| Intermediate | `int_quality__scrap_costs` | Scrap quantities costed into dollars. |
+| Marts | `mart_quality__defect_rates` | Defect rates by machine, shift, operator, material and complexity. |
+| Marts | `mart_quality__operator_performance` | Operator-level quality and scrap performance. |
+| Marts | `mart_quality__scrap_summary` | Scrap cost rolled up for reporting. |
+
+### ML model: [`ml/src/`](ml/src/)
+
+The defect-risk model lifecycle, from features through monitoring.
+
+| File | What it does |
+|---|---|
+| `features.py` | Builds the model features from the conformed marts. |
+| `training.py` | Trains and tunes the three candidate classifiers, then selects and registers the best. |
+| `scoring.py` | Runs monthly batch scoring with SHAP driver attribution. |
+| `monitoring.py` | Four-layer drift and performance monitoring against reference windows. |
+| `inspect_drift.py` | One-off diagnostic for inspecting the underlying Evidently drift metrics. |
+
+---
+
 ## How it works
 
 ```mermaid
@@ -114,15 +152,6 @@ The report generators write standalone HTML; the copies served by GitHub Pages l
 | Modeling | XGBoost, scikit-learn, Optuna, SHAP |
 | MLOps | MLflow (tracking & registry), Evidently (drift), Prefect (orchestration) |
 | Delivery | Static HTML, GitHub Pages |
-
----
-
-## Code
-
-Selected source, each file self-contained (it references the generated data and modeled marts but reads on its own):
-
-- **[Data pipeline (dbt on DuckDB)](code/dbt_pipeline.sql)**: staging, intermediate and mart models in dependency order.
-- **[ML model](code/ml_model.py)**: feature engineering, candidate training and selection, batch scoring, and drift monitoring.
 
 ---
 
