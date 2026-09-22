@@ -43,31 +43,15 @@ Going forward, defect risk is known before a job runs, and the conditions behind
 
 ## Code
 
-The core source lives in two folders.
-
 ### Data pipeline: [`data_pipeline/models/`](data_pipeline/models/)
 
-dbt models on DuckDB, built in dependency order: staging normalizes each source extract, intermediate conforms them into shared entities, and marts assemble the analysis-ready tables the reports and model read.
+| Layer | What it is, does and contains |
+|---|---|
+| Staging | One model per source table across the MES, ERP, HR, materials and QMS. Each cleans, types and renames a single raw extract into a consistent shape, without joining across systems. |
+| Intermediate | Joins the staged tables into conformed entities: production orders enriched with their machine, operator, material and part context, orders matched to inspection results, and scrap quantities costed into dollars. |
+| Marts | The analysis-ready tables the reports and model read: defect rates by machine, shift, operator, material and complexity; operator-level quality performance; and scrap cost summaries. |
 
-| Layer | Model | What it does |
-|---|---|---|
-| Staging | `stg_erp__part_catalog` | Part master from the ERP, typed and deduplicated. |
-| Staging | `stg_erp__production_orders` | Production and work orders from the ERP. |
-| Staging | `stg_hr__operators` | Operator roster from HR. |
-| Staging | `stg_materials__lots` | Material lots with gauge and attributes. |
-| Staging | `stg_mes__machines` | Machine master from the MES. |
-| Staging | `stg_qms__inspection_records` | Inspection outcomes from the QMS. |
-| Staging | `stg_qms__scrap_events` | Scrap events and quantities from the QMS. |
-| Intermediate | `int_quality__orders_enriched` | Orders joined to machine, operator, material and part context. |
-| Intermediate | `int_quality__orders_with_inspections` | Orders matched to their inspection results. |
-| Intermediate | `int_quality__scrap_costs` | Scrap quantities costed into dollars. |
-| Marts | `mart_quality__defect_rates` | Defect rates by machine, shift, operator, material and complexity. |
-| Marts | `mart_quality__operator_performance` | Operator-level quality and scrap performance. |
-| Marts | `mart_quality__scrap_summary` | Scrap cost rolled up for reporting. |
-
-### ML model: [`ml/src/`](ml/src/)
-
-The defect-risk model lifecycle, from features through monitoring.
+### Machine learning model: [`ml/src/`](ml/src/)
 
 | File | What it does |
 |---|---|
