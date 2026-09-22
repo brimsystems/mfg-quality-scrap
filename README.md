@@ -55,10 +55,10 @@ Going forward, defect risk is known before a job runs, and the conditions behind
 
 | File | What it does |
 |---|---|
-| `features.py` | Builds the model features (machine age, job complexity, material and supplier, operator and shift, schedule variance, plus engineered interaction terms) from the conformed marts. |
+| `features.py` | Builds the model features from the conformed data marts. |
 | `training.py` | Trains and tunes the three model candidates, then selects and registers the best. |
-| `scoring.py` | Runs monthly batch scoring to flag each open work order's defect-risk tier and top contributing driver before the job runs. |
-| `monitoring.py` | Four-layer drift and performance monitoring against reference windows, following MLOps best practices across performance, target drift, prediction drift and feature drift. |
+| `scoring.py` | Runs monthly batch scoring to flag each open work order's defect-risk tier and top contributing drivers. |
+| `monitoring.py` | Four-layer drift (performance, target, prediction and feature) and performance monitoring against reference windows, following MLOps best practices. |
 | `inspect_drift.py` | One-off diagnostic for inspecting the underlying drift metrics from `monitoring.py`. |
 
 ---
