@@ -12,9 +12,9 @@ An **analytics and ML layer** is then built on top of that integrated data sourc
 
 The machine learning model's defect risk predictions are embedded into the company's existing ERP system, as shown below:
 
-[![ERP work-order queue with embedded defect risk flags](docs/screenshots/erp_queue.png)](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html)
+[![ERP work-order queue with embedded defect risk flags](docs/screenshots/erp_queue.png)](https://brimsystems.github.io/mfg-defects-scrap/docs/index.html)
 
-> **[Open the live ERP work-order queue &rarr;](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html)** &nbsp;·&nbsp; **[All six deliverables &rarr;](https://brimsystems.github.io/mfg-quality-scrap/)**
+> **[Open the live ERP work-order queue &rarr;](https://brimsystems.github.io/mfg-defects-scrap/docs/index.html)** &nbsp;·&nbsp; **[All six deliverables &rarr;](https://brimsystems.github.io/mfg-defects-scrap/)**
 
 ---
 
@@ -32,12 +32,12 @@ Going forward, defect risk is known before a job runs, and the conditions behind
 
 | # | Deliverable | What it is | Links |
 |---|---|---|---|
-| 1 | ERP work-order queue | The model embedded in a JobBOSS-style queue: each job's defect-risk tier and top contributing driver, shown inline. | [View](https://brimsystems.github.io/mfg-quality-scrap/docs/index.html) |
-| 2 | Analytics diagnostic report | Where defects and scrap cost concentrate across machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk. | [View](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/report.html) |
-| 3 | KPI dashboard | The recurring weekly and monthly view of defect-rate and scrap-cost KPIs with historical trends. | [View](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/dashboard.html) |
-| 4 | ML model overview & performance report | A high-level model summary: what the model predicts, how it performs, the scrap it helps avoid, and its limits. | [View](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/ml_overview.html) |
-| 5 | ML technical report | Training data, model selection, validation and test metrics, calibration, confusion matrix, and SHAP feature importance. | [View](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/ml_technical.html) |
-| 6 | MLOps monitoring report | Monitoring across periods on four layers (performance, target, prediction, and feature drift) with a rules-based retraining decision. | [View](https://brimsystems.github.io/mfg-quality-scrap/docs/reports/monitoring_report.html) |
+| 1 | ERP work-order queue | The model embedded in a JobBOSS-style queue: each job's defect-risk tier and top contributing driver, shown inline. | [View](https://brimsystems.github.io/mfg-defects-scrap/docs/index.html) |
+| 2 | Analytics diagnostic report | Where defects and scrap cost concentrate across machine, shift, operator, material, supplier, and complexity, and the cross-system combinations that compound risk. | [View](https://brimsystems.github.io/mfg-defects-scrap/docs/reports/report.html) |
+| 3 | KPI dashboard | The recurring weekly and monthly view of defect-rate and scrap-cost KPIs with historical trends. | [View](https://brimsystems.github.io/mfg-defects-scrap/docs/reports/dashboard.html) |
+| 4 | ML model overview & performance report | A high-level model summary: what the model predicts, how it performs, the scrap it helps avoid, and its limits. | [View](https://brimsystems.github.io/mfg-defects-scrap/docs/reports/ml_overview.html) |
+| 5 | ML technical report | Training data, model selection, validation and test metrics, calibration, confusion matrix, and SHAP feature importance. | [View](https://brimsystems.github.io/mfg-defects-scrap/docs/reports/ml_technical.html) |
+| 6 | MLOps monitoring report | Monitoring across periods on four layers (performance, target, prediction, and feature drift) with a rules-based retraining decision. | [View](https://brimsystems.github.io/mfg-defects-scrap/docs/reports/monitoring_report.html) |
 
 ---
 
