@@ -4,7 +4,7 @@
 
 It starts with a **data pipeline** that integrates machine, order and quality data from three disconnected systems into a single modeled dataset.
 
-An **analytics and ML layer** is then built on top of that integrated dataset, including:
+An **analytics and ML layer** is then built on top of that integrated data source, including:
 
 1. **Analytics diagnostics report** that uncovers the sources of elevated defect risks and scrap costs
 2. **KPI dashboard** that tracks key outcomes related to defects and scrap costs, laid out by week and month
